@@ -1,0 +1,448 @@
+{
+    "gridData": [
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": 1.732050895690918,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": 0.8660253882408142,
+                "y": 0.0,
+                "z": 1.5000001192092896
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 1,
+            "tilePosition": {
+                "x": -0.8660255670547485,
+                "y": 0.0,
+                "z": 1.5
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": -1.732050895690918,
+                "y": 0.0,
+                "z": -1.5142069287321648e-7
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 1,
+            "tilePosition": {
+                "x": -0.8660252690315247,
+                "y": 0.0,
+                "z": -1.5000001192092896
+            },
+            "hasProp": true,
+            "propIndex": 0,
+            "propRotation": 272.0,
+            "propScale": 1.2584893703460694
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": 0.8660252690315247,
+                "y": 0.0,
+                "z": -1.5000001192092896
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": 2.598076343536377,
+                "y": 0.0,
+                "z": 1.5000001192092896
+            },
+            "hasProp": true,
+            "propIndex": 2,
+            "propRotation": 301.0,
+            "propScale": 1.2086418867111207
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": -1.1920928955078126e-7,
+                "y": 0.0,
+                "z": 3.0
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": -2.598076343536377,
+                "y": 0.0,
+                "z": 1.4999998807907105
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": -2.598076105117798,
+                "y": 0.0,
+                "z": -1.5000003576278687
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": -3.000000238418579
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 1,
+            "tilePosition": {
+                "x": 2.598076105117798,
+                "y": 0.0,
+                "z": -1.5000001192092896
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 1,
+            "tilePosition": {
+                "x": 3.464101791381836,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 1,
+            "tilePosition": {
+                "x": 1.7320507764816285,
+                "y": 0.0,
+                "z": 3.000000238418579
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": -1.732051134109497,
+                "y": 0.0,
+                "z": 3.0
+            },
+            "hasProp": true,
+            "propIndex": 1,
+            "propRotation": 16.000003814697267,
+            "propScale": 1.393164038658142
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": -3.464101791381836,
+                "y": 0.0,
+                "z": -3.0284138574643296e-7
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": -1.7320505380630494,
+                "y": 0.0,
+                "z": -3.000000238418579
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": 1.7320505380630494,
+                "y": 0.0,
+                "z": -3.000000238418579
+            },
+            "hasProp": true,
+            "propIndex": 2,
+            "propRotation": 55.0,
+            "propScale": 1.036731243133545
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": 4.330127239227295,
+                "y": 0.0,
+                "z": 1.500000238418579
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": 3.464101552963257,
+                "y": 0.0,
+                "z": 3.000000476837158
+            },
+            "hasProp": true,
+            "propIndex": 2,
+            "propRotation": 228.0,
+            "propScale": 1.0716572999954224
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": 0.8660252094268799,
+                "y": 0.0,
+                "z": 4.500000476837158
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": -0.8660256862640381,
+                "y": 0.0,
+                "z": 4.5
+            },
+            "hasProp": true,
+            "propIndex": 3,
+            "propRotation": 25.0,
+            "propScale": 1.1839319467544556
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": -3.464102029800415,
+                "y": 0.0,
+                "z": 2.999999761581421
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": -4.330127239227295,
+                "y": 0.0,
+                "z": 1.4999995231628419
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": -4.330127239227295,
+                "y": 0.0,
+                "z": -1.5000004768371583
+            },
+            "hasProp": true,
+            "propIndex": 2,
+            "propRotation": 18.000001907348634,
+            "propScale": 0.7574120759963989
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": -3.4641013145446779,
+                "y": 0.0,
+                "z": -3.000000476837158
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": -0.8660252094268799,
+                "y": 0.0,
+                "z": -4.500000476837158
+            },
+            "hasProp": true,
+            "propIndex": 2,
+            "propRotation": 88.99999237060547,
+            "propScale": 0.8192073702812195
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": 0.866025447845459,
+                "y": 0.0,
+                "z": -4.500000476837158
+            },
+            "hasProp": true,
+            "propIndex": 1,
+            "propRotation": 336.0,
+            "propScale": 1.275503396987915
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": 3.464101552963257,
+                "y": 0.0,
+                "z": -3.000000238418579
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": 4.330127239227295,
+                "y": 0.0,
+                "z": -1.5
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": 5.196152687072754,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": 2.598076105117798,
+                "y": 0.0,
+                "z": 4.500000476837158
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": -2.598076581954956,
+                "y": 0.0,
+                "z": 4.5
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": -5.196152687072754,
+                "y": 0.0,
+                "z": -4.5426210704135885e-7
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": -2.5980758666992189,
+                "y": 0.0,
+                "z": -4.500000476837158
+            },
+            "hasProp": true,
+            "propIndex": 1,
+            "propRotation": 323.0,
+            "propScale": 1.230386734008789
+        },
+        {
+            "tileIndex": 1,
+            "tilePosition": {
+                "x": 2.5980758666992189,
+                "y": 0.0,
+                "z": -4.500000476837158
+            },
+            "hasProp": true,
+            "propIndex": 2,
+            "propRotation": 233.0,
+            "propScale": 0.7592896223068237
+        },
+        {
+            "tileIndex": 0,
+            "tilePosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "hasProp": false,
+            "propIndex": -1,
+            "propRotation": 0.0,
+            "propScale": 1.0
+        }
+    ]
+}
