@@ -29,7 +29,7 @@ public class GridGeneratorEditor : Editor
         serializedObject.Update();
 
         // Draw everything in the script automatically, EXCLUDING the specified properties
-        DrawPropertiesExcluding(serializedObject, "gridShape", "gridSize", "gridRadius", "gridDataFile", "addProps", "props", "coveragePercentage", "scaleRange", "fileName");
+        DrawPropertiesExcluding(serializedObject, "gridShape", "gridSize", "gridRadius", "gridDataFile", "addProps", "hexProps", "coveragePercentage", "scaleRange", "fileName");
 
         // Draw the grid shape enum dropdown first
         EditorGUILayout.PropertyField(gridShapeProp);
@@ -62,7 +62,7 @@ public class GridGeneratorEditor : Editor
 
         if (addProps.boolValue)
         {
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("props"), true);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("hexProps"), true);
             EditorGUILayout.PropertyField(serializedObject.FindProperty("coveragePercentage"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("scaleRange"));
         }
