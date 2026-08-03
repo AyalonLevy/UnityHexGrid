@@ -380,6 +380,8 @@ public class HexGridGenerator : MonoBehaviour
         // Random scale based on the scale range
         float randomScale = Random.Range(scaleRange.x, scaleRange.y);
 
+        if (propPrefab == null) return;
+
         SpawnProp(propPrefab, propsContainer, randomYRotation, randomScale);
     }
 
