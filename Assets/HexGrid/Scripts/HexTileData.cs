@@ -11,12 +11,18 @@ public class HexTileData : MonoBehaviour
 
     [Header("Tile Data")]
     public int tileIndex;
+    
     [TileDomainDropdown]
     public TileDomain currentDomain;
     [SerializeField, HideInInspector] private TileDomain previousDomain;
 
     [Header("PropData")]
     public bool hasProp;
+
+    [PropDropdown]
+    public GameObject manualPropSelection;
+    [SerializeField, HideInInspector] private GameObject previousManualProp;
+
     public int propIndex;
     public float propRotation;
     public float propScale;
@@ -34,7 +40,7 @@ public class HexTileData : MonoBehaviour
         UpdatePropContainerHeight();
 
 #if UNITY_EDITOR
-        // Only trigger the mesh swap if the index changed and we have a database
+        // 1. Check if Domain changed (Clear props as you decided)
         if (database != null && currentDomain != previousDomain && previousDomain != null)
         {
             tileIndex = Mathf.Clamp(tileIndex, 0, database.hexGridTiles.Count - 1);
@@ -44,6 +50,16 @@ public class HexTileData : MonoBehaviour
                 // Safety check in case the user deletes the object the exact frame they modify it
                 if (this == null) return;
                 SwapTileMesh();
+            };
+        }
+
+        // 2. Check if Manual Prop Selection changed in the Inspector
+        if (database != null && manualPropSelection != previousManualProp)
+        {
+            EditorApplication.delayCall += () =>
+            {
+                if (this == null) return;
+                UpdateManualProp();
             };
         }
 #endif
@@ -111,15 +127,57 @@ public class HexTileData : MonoBehaviour
         if (newTile.tilePrefab != null)
         {
             GameObject newMesh = Instantiate(newTile.tilePrefab, visualsContainer);
-            newMesh.transform.localPosition = Vector3.zero;
-            newMesh.transform.localRotation = Quaternion.identity;
-
+            newMesh.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
             Undo.RegisterCreatedObjectUndo(newMesh, "Swap Hex Tile Mesh");
         }
 
         previousDomain = currentDomain;
 
         // Mark the scene as dirty so Unity knows to save these changes
+        EditorUtility.SetDirty(this);
+    }
+#endif
+
+#if UNITY_EDITOR
+    private void UpdateManualProp()
+    {
+        if (propsContainer == null || database == null) return;
+
+        // Destroy the prop
+        for (int i = propsContainer.childCount - 1; i >= 0; i--)
+            DestroyImmediate(propsContainer.GetChild(i).gameObject);
+
+        if (manualPropSelection == null)
+        {
+            hasProp = false;
+            propIndex = -1;
+            previousManualProp = null;
+            EditorUtility.SetDirty(this);
+            return;
+        }
+
+        // Find the master index in the database
+        int masterIndex = database.props.FindIndex(t => t.domains.Contains(currentDomain));
+
+        if (masterIndex == -1)
+        {
+            Debug.LogWarning($"No prop prefabs found in database for domain: {currentDomain.name}");
+            return;
+        }
+
+        propIndex = masterIndex;
+        hasProp = true;
+        // propRotation = Random.Range(0.0f, 360.0f);
+        // propScale = 1.0f;
+
+        // Instantiate the prop visual
+        GameObject propInstance = Instantiate(manualPropSelection, propsContainer);
+        propInstance.transform.localRotation = Quaternion.Euler(0, propRotation, 0);
+        propInstance.transform.localScale = Vector3.one * propScale;
+
+        Undo.RegisterCreatedObjectUndo(propInstance, "Manual Prop Placement");
+
+        previousManualProp = manualPropSelection;
         EditorUtility.SetDirty(this);
     }
 #endif
