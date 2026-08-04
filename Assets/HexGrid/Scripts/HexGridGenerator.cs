@@ -3,10 +3,11 @@ using UnityEngine;
 using System.IO;
 
 
+
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-
 
 
 [System.Serializable]
@@ -14,6 +15,7 @@ public struct GridData
 {
     public int tileIndex;
     public Vector3 tilePosition;
+    public float tileHeight;
     public bool hasProp;
     public int propIndex;
     public float propRotation;
@@ -26,27 +28,6 @@ public class GridDataWrapper
     public List<GridData> gridData = new();
 }
 
-[System.Serializable]
-public struct HexTile
-{
-    public GameObject tilePrefab;
-
-    [Tooltip("select one or more domains")]
-    public GridTileDomain domain;
-
-    [Range(0.0f, 1.0f), Tooltip("Distribution weight (0 to 1)")]
-    public float weight;
-}
-
-[System.Flags]
-public enum GridTileDomain
-{
-    None = 0,
-    Grass = 1 << 0,     // 1
-    Desert = 1 << 1,    // 2
-    Water = 1 << 2      // 4
-}
-
 public enum GridShape
 {
     Rectangle,
@@ -56,32 +37,34 @@ public enum GridShape
 
 public class HexGridGenerator : MonoBehaviour
 {
+    [Header("Database Reference")]
+    [Tooltip("Assign your external HexGridDatabase asset here.")]
+    [SerializeField] private HexGridDatabase gridDatabase;
+
+    [Header("Core Tool Assets")]
+    [Tooltip("The base empty prefab that holds tile data. Found in Assets/HexGrid/Prefabs/")]
+    [SerializeField] private GameObject baseHexTilePrefab;
+
     [Header("Grid Settings")]
-    [Tooltip("First entry will be set as the default tile")]
-    [SerializeField] private HexTile[] hexGridTiles;
     [Tooltip("The length of the hexagon edge")]
     [SerializeField] private float tileEdgeSize = 1;
     [Tooltip("The height to place the props on the hexagon tile")]
-    [SerializeField] private float tileHeight = 0.1f;
     [SerializeField] private float gapBetweenTiles = 0; // Add an option to add a gap between the tiles
     [SerializeField] private Transform gridContainer;
-
 
     [Tooltip("Select grid shape")]
     [SerializeField] private GridShape gridShape = GridShape.Rectangle;
 
-    [SerializeField] private Vector2 gridSize;
+    [SerializeField] private Vector2 gridSize = new(4, 5);
     [Tooltip("Number of tiles rings")]
     [Range(0, 50)]
-    [SerializeField] int gridRadius;
+    [SerializeField] int gridRadius = 4;
     [Tooltip("Will create the grid based on the grid data file.")]
     [SerializeField] private TextAsset gridDataFile;
 
     [SerializeField] private bool addProps = false;
-
-    [SerializeField] private HexTile[] hexProps;
     [SerializeField] private float coveragePercentage = 0.5f;
-    [SerializeField] private Vector2 scaleRange;
+    [SerializeField] private Vector2 scaleRange = new(0.5f, 1.3f);
 
     [SerializeField] private string fileName = "GridData";
 
@@ -89,13 +72,18 @@ public class HexGridGenerator : MonoBehaviour
 
     private readonly float hexagonAngleDeg = 60.0f;
     private readonly int hexagonSides = 6;
-    private readonly string propContainerName = "Props";
 
 
     public void GenerateGrid()
     {
         // Clear existing tiles first
         ClearGrid();
+
+        if (gridDatabase == null)
+        {
+            Debug.LogError("HexGridDatabase is missing! Please assign a database asset to the generator.");
+            return;
+        }
 
         if (gridContainer == null)
         {
@@ -111,7 +99,10 @@ public class HexGridGenerator : MonoBehaviour
             {
                 for (int x = 0; x < gridSize.x; x++)
                 {
-                    SpawnTile(GetRandomWeightedTile(hexGridTiles), GetTilePositionForHorizontalGrid(x, y));
+                    if (gridDatabase.hexGridTiles != null)
+                    {
+                        SpawnTile(GetRandomWeightedTile(gridDatabase.hexGridTiles), GetTilePositionForHorizontalGrid(x, y));
+                    }
                 }
             }
         }
@@ -123,11 +114,16 @@ public class HexGridGenerator : MonoBehaviour
                 List<Vector3> gridPositions = GetHexagonalPosition(i);
                 for (int j = 0; j < gridPositions.Count; j++)
                 {
-                    SpawnTile(GetRandomWeightedTile(hexGridTiles), gridPositions[j]);
+                    if (gridDatabase.hexGridTiles != null)
+                    {
+                        SpawnTile(GetRandomWeightedTile(gridDatabase.hexGridTiles), gridPositions[j]);
+                    }
                 }
             }
-
-            SpawnTile(GetRandomWeightedTile(hexGridTiles), Vector3.zero);  // Spawn the center tile (ring 0)
+            if (gridDatabase.hexGridTiles != null)
+            {
+                SpawnTile(GetRandomWeightedTile(gridDatabase.hexGridTiles), Vector3.zero);  // Spawn the center tile (ring 0)
+            }
         }
         else if (gridShape == GridShape.FromFile)
         {
@@ -142,23 +138,7 @@ public class HexGridGenerator : MonoBehaviour
 
             for (int i = 0; i < gridTiles.Count; i++)
             {
-                SpawnTile(hexGridTiles[gridTiles[i].tileIndex], gridTiles[i].tilePosition, gridTiles[i].hasProp);
-
-                // Each tile with prop should spawn the prop based on the index in the props array
-                if (gridTiles[i].hasProp && gridTiles[i].propIndex >= 0 && gridTiles[i].propIndex < hexProps.Length)
-                {
-                    GameObject propToPlace = hexProps[gridTiles[i].propIndex].tilePrefab;
-
-                    Transform propsContainer = gridContainer.GetChild(i).Find(propContainerName);
-                    if (propsContainer == null)
-                    {
-                        propsContainer = new GameObject(propContainerName).transform;
-                        propsContainer.SetParent(gridContainer);
-                        propsContainer.localPosition = new(0.0f, tileHeight, 0.0f);
-                    }
-
-                    SpawnProp(propToPlace, propsContainer, gridTiles[i].propRotation, gridTiles[i].propScale);
-                }
+                SpawnTile(gridDatabase.hexGridTiles[gridTiles[i].tileIndex], gridTiles[i].tilePosition, gridTiles[i]);
             }
         }
     }
@@ -183,9 +163,9 @@ public class HexGridGenerator : MonoBehaviour
 
     public void SaveGridToFile()
     {
-        if (gridContainer == null)
+        if (gridDatabase == null || gridContainer == null)
         {
-            Debug.LogError("GridContainer is empty. No grid tiles to save.");
+            Debug.LogError("Database or GridContainer is missing. Cannot save grid.");
             return;
         }
 
@@ -194,33 +174,24 @@ public class HexGridGenerator : MonoBehaviour
 
         foreach (Transform child in gridContainer)
         {
+            HexTileData TileData = child.GetComponent<HexTileData>();
+
+            if (TileData == null)
+            {
+                Debug.LogWarning($"Object '{child.name}' in GridContainer is missing HexTiledata! Skipping.");
+                continue;
+            }
+
             GridData data = new()
             {
-                tilePosition = child.position
+                tilePosition = child.position,
+                tileIndex = TileData.tileIndex,
+                tileHeight = TileData.tileHeight,
+                hasProp = TileData.hasProp,
+                propIndex = TileData.propIndex,
+                propRotation = TileData.propRotation,
+                propScale = TileData.propScale
             };
-
-            string tileName = child.name.Replace("(Clone)", "").Trim();
-            data.tileIndex = System.Array.FindIndex(hexGridTiles, c => c.tilePrefab.name == tileName);
-
-            Transform propContainer = child.Find(propContainerName);
-            data.hasProp = propContainer != null && propContainer.childCount > 0;
-
-            // Get the name of the prop and compare it to the props array to find the index. If prop not found, set index to -1
-            if (data.hasProp)
-            {
-                string propName = propContainer.GetChild(0).name.Replace("(Clone)", "").Trim();
-
-                data.propIndex = System.Array.FindIndex(hexProps, p => p.tilePrefab.name == propName);
-
-                data.propRotation = propContainer.GetChild(0).transform.rotation.eulerAngles.y;
-                data.propScale = propContainer.GetChild(0).transform.localScale.x;
-            }
-            else
-            {
-                data.propIndex = -1;
-                data.propRotation = 0;
-                data.propScale = 1;
-            }
 
             grid.gridData.Add(data);
         }
@@ -228,36 +199,63 @@ public class HexGridGenerator : MonoBehaviour
         // Convert the list of positions to JSON format
         string json = JsonUtility.ToJson(grid, true);
 
+#if UNITY_EDITOR
+        // Opens a nice "Save As" window in the Unity Editor
+        string defaultName = string.IsNullOrEmpty(fileName) ? "NewGridData" : fileName;
+
         // Save the JSON to a file
-        string filePath = Application.dataPath + $"/Resources/{fileName}.json";
+        string filePath = UnityEditor.EditorUtility.SaveFilePanelInProject(
+            "Save Grid Data",
+            defaultName,
+            "json",
+            "Choose where to save your grid layout data."
+            );
+
+        // If the user clicks "Cancel" in the save window, filePath will be empty
+        if (string.IsNullOrEmpty(filePath))
+        {
+            Debug.Log("Save cancelled by user.");
+            return;
+        }
 
         File.WriteAllText(filePath, json);
 
-        Debug.Log($"Saved grid coordinates to {filePath}");
-
         // Force Unity to see the new asset in the Resources folder
-#if UNITY_EDITOR
         UnityEditor.AssetDatabase.Refresh();
+
+        // Optional: Automatically ping the newly saved file so the user sees it
+        Object savedAsset = UnityEditor.AssetDatabase.LoadAssetAtPath<Object>(filePath);
+        if (savedAsset != null)
+        {
+            UnityEditor.EditorGUIUtility.PingObject(savedAsset);
+        }
+
+        Debug.Log($"<color=green>Successfully saved grid coordinates to:</color> {filePath}");
+#else
+        // Fallback just in case this is ever executed in a compiled runtime build
+        string filePath = Application.persistentDataPath + $"/{fileName}.json";
+        File.WriteAllText(filePath, json);
+        Debug.Log($"Saved grid coordinates to {filePath}");
 #endif
     }
 
-    private HexTile GetRandomWeightedTile(HexTile[] tiles)
+    private HexGridDatabase.TileEntry GetRandomWeightedTile(List<HexGridDatabase.TileEntry> tiles)
     {
         float totalWeight = 0.0f;
         foreach (var tile in tiles)
         {
-            totalWeight += tile.weight;
+            totalWeight += tile.spawnChance;
         }
 
         // The first entry is the default value
-        if (totalWeight < 0.0f) return tiles[0];
+        if (totalWeight < 0.0f) return gridDatabase.hexGridTiles[0];
 
         float randomValue = Random.Range(0, totalWeight);
         float currentSum = 0.0f;
 
         foreach (var tile in tiles)
         {
-            currentSum += tile.weight;
+            currentSum += tile.spawnChance;
             if (randomValue <= currentSum)
             {
                 return tile;
@@ -267,22 +265,94 @@ public class HexGridGenerator : MonoBehaviour
         return tiles[0];
     }
 
-    private void SpawnTile(HexTile tile, Vector3 position, bool fromFile = false)
+    private GameObject GetRandomWeightedProp(List<HexGridDatabase.PropEntry> props)
+    {
+        float totalWeight = 0.0f;
+        foreach (var prop in props)
+        {
+            totalWeight += prop.spawnChance;
+        }
+
+        // The first entry is the default value
+        if (totalWeight < 0.0f) return gridDatabase.props[0].propPrefab;
+        float randomValue = Random.Range(0, totalWeight);
+        float currentSum = 0.0f;
+
+        foreach (var prop in props)
+        {
+            currentSum += prop.spawnChance;
+            if (randomValue <= currentSum)
+            {
+                return prop.propPrefab;
+            }
+        }
+
+        return props[0].propPrefab;
+    }
+
+    private void SpawnTile(HexGridDatabase.TileEntry tile, Vector3 position, GridData? loadedData = null)
     {
         if (tile.tilePrefab == null) return;
 
-        GameObject tilePrefab = Instantiate(tile.tilePrefab, position, Quaternion.identity, gridContainer);
+        // Instantiate the structures Base Prefab
+        GameObject tileObj = Instantiate(baseHexTilePrefab, position, Quaternion.identity, gridContainer);
+        HexTileData tileData = tileObj.GetComponent<HexTileData>();
 
-        GridTileDomain tileDomain = tile.domain;
+        // Set the base data
+        tileData.currentDomain = tile.domain;
 
-        if (addProps && hexProps.Length > 0 && Random.value <= coveragePercentage)
+        // Instantiate the visual mesh to the Visuals container
+        GameObject visualMesh = Instantiate(tile.tilePrefab, tileData.visualsContainer);
+
+        // Verify the visuals has no transform
+        visualMesh.transform.localPosition = Vector3.zero;
+
+        // Handle Props
+        if (loadedData != null)
         {
-            GenerateProp(tileDomain, tilePrefab.transform);
+            // Loading from file
+            tileData.tileIndex = loadedData.Value.tileIndex;
+            tileData.tileHeight = loadedData.Value.tileHeight;
+            tileData.hasProp = loadedData.Value.hasProp;
+            tileData.propIndex = loadedData.Value.propIndex;
+            tileData.propRotation = loadedData.Value.propRotation;
+            tileData.propScale = loadedData.Value.propScale;
+
+            tileData.UpdatePropContainerHeight();
+
+            if (tileData.hasProp && tileData.propIndex >= 0 && tileData.propIndex < gridDatabase.props.Count)
+            {
+                GameObject propPrefab = gridDatabase.props[tileData.propIndex].propPrefab;
+                SpawnProp(propPrefab, tileData.propsContainer, tileData.propRotation, tileData.propScale);
+            }
+
+            // Empty tiles can either get a new prop or not - based on the `addProp` value
+            if (!tileData.hasProp && addProps && gridDatabase.props.Count > 0 && Random.value <= coveragePercentage)
+            {
+                tileData.hasProp = true;
+                GenerateProp(tile.domain, tileData);
+            }
+        }
+        else
+        {
+            // Generating props
+            tileData.tileIndex = gridDatabase.hexGridTiles.IndexOf(tile);
+
+            if (addProps && gridDatabase.props.Count > 0 && Random.value <= coveragePercentage)
+            {
+                tileData.hasProp = true;
+                GenerateProp(tile.domain, tileData);
+            }
+            else
+            {
+                tileData.hasProp = false;
+                tileData.propIndex = -1;
+            }
         }
 
 #if UNITY_EDITOR
         // Allows undo support when deleting in edit mode
-        Undo.RegisterCreatedObjectUndo(tilePrefab, "Generate Hex Tile");
+        Undo.RegisterCreatedObjectUndo(tileObj, "Generate Hex Tile");
 #endif
     }
 
@@ -362,17 +432,19 @@ public class HexGridGenerator : MonoBehaviour
         return new List<GridData>();
     }
 
-    private void GenerateProp(GridTileDomain tileDomain, Transform tile)
+    private void GenerateProp(TileDomain tileDomain, HexTileData tileData)
     {
-        Transform propsContainer = tile.Find(propContainerName);
-        if (propsContainer == null)
+        GameObject propPrefab = GetPropToSpawn(tileDomain);
+
+        if (propPrefab == null)
         {
-            propsContainer = new GameObject(propContainerName).transform;
-            propsContainer.SetParent(tile);
-            propsContainer.localPosition = new(0.0f, tileHeight, 0.0f);
+            tileData.hasProp = false;
+            tileData.propIndex = -1;
+            return;
         }
 
-        GameObject propPrefab = GetPropToSpawn(tileDomain);
+        tileData.propIndex = gridDatabase.props.FindIndex(p => p.propPrefab == propPrefab);
+        tileData.hasProp = true;
 
         // Random rotation along the y axis
         float randomYRotation = Random.Range(0, 360);
@@ -380,15 +452,16 @@ public class HexGridGenerator : MonoBehaviour
         // Random scale based on the scale range
         float randomScale = Random.Range(scaleRange.x, scaleRange.y);
 
-        if (propPrefab == null) return;
+        tileData.propRotation = randomYRotation;
+        tileData.propScale = randomScale;
 
-        SpawnProp(propPrefab, propsContainer, randomYRotation, randomScale);
+        SpawnProp(propPrefab, tileData.propsContainer, randomYRotation, randomScale);
     }
 
-    private void SpawnProp(GameObject prop, Transform parent, float protRot, float propScale)
+    private void SpawnProp(GameObject prop, Transform parent, float propRot, float propScale)
     {
         GameObject propInstance = Instantiate(prop, parent);
-        propInstance.transform.localRotation = Quaternion.Euler(0, protRot, 0);
+        propInstance.transform.localRotation = Quaternion.Euler(0, propRot, 0);
         propInstance.transform.localScale = Vector3.one * propScale;
 
 #if UNITY_EDITOR
@@ -397,13 +470,13 @@ public class HexGridGenerator : MonoBehaviour
 #endif
     }
 
-    private GameObject GetPropToSpawn(GridTileDomain tileDomain)
+    private GameObject GetPropToSpawn(TileDomain tileDomain)
     {
         // Filter all the props based on the domain
-        HexTile[] filteredProps = System.Array.FindAll(hexProps, p => p.domain.HasFlag(tileDomain));
+        List<HexGridDatabase.PropEntry> filteredProps = gridDatabase.props.FindAll(p => p.domains != null && p.domains.Contains(tileDomain));
 
-        if (filteredProps.Length == 0) return null;
+        if (filteredProps.Count == 0) return null;
 
-        return GetRandomWeightedTile(filteredProps).tilePrefab;
+        return GetRandomWeightedProp(filteredProps);
     }
 }

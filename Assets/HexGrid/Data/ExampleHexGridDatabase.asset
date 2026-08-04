@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f9397881364b07498d06eb75489bcd7, type: 3}
+  m_Name: ExampleHexGridDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::HexGridDatabase
+  availableDomains:
+  - {fileID: 11400000, guid: 8b8e408bb6070b248ac5171885b3d11c, type: 2}
+  - {fileID: 11400000, guid: 2eba24719c2a7114ba86814d38697dcf, type: 2}
+  - {fileID: 11400000, guid: 843a60075032ef046ae3264e5b1fd660, type: 2}
+  hexGridTiles:
+  - tilePrefab: {fileID: 3465255163055390077, guid: 4bed846ec2f11674f8350ad90c2574d7, type: 3}
+    domain: {fileID: 11400000, guid: 8b8e408bb6070b248ac5171885b3d11c, type: 2}
+    spawnChance: 0.8
+  - tilePrefab: {fileID: 3465255163055390077, guid: f5d4e5a1eae95f74f87e0e2b97edd01e, type: 3}
+    domain: {fileID: 11400000, guid: 2eba24719c2a7114ba86814d38697dcf, type: 2}
+    spawnChance: 0.3
+  - tilePrefab: {fileID: 5379219410020165396, guid: cea4201365ab478429a5d96635a6fb36, type: 3}
+    domain: {fileID: 11400000, guid: 843a60075032ef046ae3264e5b1fd660, type: 2}
+    spawnChance: 0.2
+  props:
+  - propPrefab: {fileID: 8345013252135654505, guid: fefe114373e974b43b391be2c530eabf, type: 3}
+    domains:
+    - {fileID: 11400000, guid: 8b8e408bb6070b248ac5171885b3d11c, type: 2}
+    spawnChance: 0.2
+  - propPrefab: {fileID: 4881809193309869344, guid: e1ab0aa3f972a1943bcbd81f83f9b25a, type: 3}
+    domains:
+    - {fileID: 11400000, guid: 8b8e408bb6070b248ac5171885b3d11c, type: 2}
+    spawnChance: 0.15
+  - propPrefab: {fileID: 6253563552365524973, guid: fc107d43b90625b4196a42578aeddb86, type: 3}
+    domains:
+    - {fileID: 11400000, guid: 8b8e408bb6070b248ac5171885b3d11c, type: 2}
+    spawnChance: 0.3
+  - propPrefab: {fileID: 7606757448598989393, guid: cab2c63843f95bf43a23cc6bb0e154cc, type: 3}
+    domains:
+    - {fileID: 11400000, guid: 2eba24719c2a7114ba86814d38697dcf, type: 2}
+    - {fileID: 11400000, guid: 8b8e408bb6070b248ac5171885b3d11c, type: 2}
+    spawnChance: 0.2
+  - propPrefab: {fileID: 8468182502476741364, guid: 671cfa5578c34e448b664c1673ae4d95, type: 3}
+    domains:
+    - {fileID: 11400000, guid: 8b8e408bb6070b248ac5171885b3d11c, type: 2}
+    - {fileID: 11400000, guid: 2eba24719c2a7114ba86814d38697dcf, type: 2}
+    spawnChance: 0.6
+  - propPrefab: {fileID: 9082607205502941140, guid: 80071ac975590f24ba34662d1aa4cd5c, type: 3}
+    domains:
+    - {fileID: 11400000, guid: 2eba24719c2a7114ba86814d38697dcf, type: 2}
+    spawnChance: 0.4
+  - propPrefab: {fileID: 2080492825710397588, guid: 5c01b15a36e933546a26e721bdf0ef6c, type: 3}
+    domains:
+    - {fileID: 11400000, guid: 2eba24719c2a7114ba86814d38697dcf, type: 2}
+    spawnChance: 0.3
