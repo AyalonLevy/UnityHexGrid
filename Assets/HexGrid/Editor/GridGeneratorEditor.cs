@@ -43,7 +43,7 @@ public class GridGeneratorEditor : Editor
         {
             EditorGUILayout.LabelField("Rectangle Grid Parameters", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(gridSizeProp);
-        } 
+        }
         else if (selectedShape == GridShape.Hexagonal)
         {
             EditorGUILayout.LabelField("Hexagonal Grid Parameters", EditorStyles.boldLabel);

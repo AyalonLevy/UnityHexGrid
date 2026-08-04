@@ -91,6 +91,6 @@ public class HexGridLayout : MonoBehaviour
             yPosition = (row * verticalDistance) - offset;
         }
 
-            return new Vector3(xPosition, 0, -yPosition);
+        return new Vector3(xPosition, 0, -yPosition);
     }
 }

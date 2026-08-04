@@ -1,5 +1,5 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 [CreateAssetMenu(fileName = "HexGridDatabase", menuName = "HexGrid/Database")]
 public class HexGridDatabase : ScriptableObject

@@ -298,6 +298,9 @@ public class HexGridGenerator : MonoBehaviour
         GameObject tileObj = Instantiate(baseHexTilePrefab, position, Quaternion.identity, gridContainer);
         HexTileData tileData = tileObj.GetComponent<HexTileData>();
 
+        tileData.database = this.gridDatabase;
+        tileData.InitializeData(this.gridDatabase, loadedData != null ? loadedData.Value.tileIndex : gridDatabase.hexGridTiles.IndexOf(tile), tile.domain);
+
         // Set the base data
         tileData.currentDomain = tile.domain;
 
