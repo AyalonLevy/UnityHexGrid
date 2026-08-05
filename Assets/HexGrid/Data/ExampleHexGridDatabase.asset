@@ -20,12 +20,19 @@ MonoBehaviour:
   - tilePrefab: {fileID: 3465255163055390077, guid: 4bed846ec2f11674f8350ad90c2574d7, type: 3}
     domain: {fileID: 11400000, guid: 8b8e408bb6070b248ac5171885b3d11c, type: 2}
     spawnChance: 0.8
+    hasProp: 0
   - tilePrefab: {fileID: 3465255163055390077, guid: f5d4e5a1eae95f74f87e0e2b97edd01e, type: 3}
     domain: {fileID: 11400000, guid: 2eba24719c2a7114ba86814d38697dcf, type: 2}
     spawnChance: 0.3
+    hasProp: 0
   - tilePrefab: {fileID: 5379219410020165396, guid: cea4201365ab478429a5d96635a6fb36, type: 3}
     domain: {fileID: 11400000, guid: 843a60075032ef046ae3264e5b1fd660, type: 2}
     spawnChance: 0.2
+    hasProp: 0
+  - tilePrefab: {fileID: 3465255163055390077, guid: 2c294253925e37042b89ebbfd52eb4e4, type: 3}
+    domain: {fileID: 11400000, guid: 20e3a69104887fa4fa836244d98c4dd9, type: 2}
+    spawnChance: 0.1
+    hasProp: 0
   props:
   - propPrefab: {fileID: 8345013252135654505, guid: fefe114373e974b43b391be2c530eabf, type: 3}
     domains:
@@ -57,3 +64,19 @@ MonoBehaviour:
     domains:
     - {fileID: 11400000, guid: 2eba24719c2a7114ba86814d38697dcf, type: 2}
     spawnChance: 0.3
+  - propPrefab: {fileID: 3528798998654552261, guid: 9d9a248b6c18eb840b4925065556b3f3, type: 3}
+    domains:
+    - {fileID: 11400000, guid: 20e3a69104887fa4fa836244d98c4dd9, type: 2}
+    spawnChance: 0.3
+  - propPrefab: {fileID: 7758743455125150416, guid: ffbb75ce14717aa4681621807c939eba, type: 3}
+    domains:
+    - {fileID: 11400000, guid: 20e3a69104887fa4fa836244d98c4dd9, type: 2}
+    spawnChance: 0.4
+  - propPrefab: {fileID: 5102201876815616552, guid: dc4e7402610956844a9b7d4754a662ab, type: 3}
+    domains:
+    - {fileID: 11400000, guid: 20e3a69104887fa4fa836244d98c4dd9, type: 2}
+    spawnChance: 0.2
+  - propPrefab: {fileID: 6062147152526289937, guid: 21d1a220aacc43a4894c429d868d1ba5, type: 3}
+    domains:
+    - {fileID: 11400000, guid: 20e3a69104887fa4fa836244d98c4dd9, type: 2}
+    spawnChance: 0.2
