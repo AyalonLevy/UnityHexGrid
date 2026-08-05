@@ -354,6 +354,9 @@ public class HexGridGenerator : MonoBehaviour
         }
 
 #if UNITY_EDITOR
+        // Sync the dropdown so the Inspector instantly reflects the generated data
+        tileData.SyncPropDropdown();
+
         // Allows undo support when deleting in edit mode
         Undo.RegisterCreatedObjectUndo(tileObj, "Generate Hex Tile");
 #endif

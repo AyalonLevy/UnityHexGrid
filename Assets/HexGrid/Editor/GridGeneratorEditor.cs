@@ -83,7 +83,7 @@ public class GridGeneratorEditor : Editor
         }
 
         GUI.backgroundColor = new Color(1.0f, 0.2f, 0.3f);
-        if (GUILayout.Button("Clear Grid", GUILayout.Height(25)))
+        if (GUILayout.Button("Clear Grid", GUILayout.Height(30)))
         {
             generator.ClearGrid();
         }

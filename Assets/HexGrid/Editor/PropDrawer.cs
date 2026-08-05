@@ -1,6 +1,6 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using System.Collections.Generic;
 
 [CustomPropertyDrawer(typeof(PropDropdownAttribute))]
 public class PropDrawer : PropertyDrawer
@@ -26,15 +26,17 @@ public class PropDrawer : PropertyDrawer
         HexTileData tileData = property.serializedObject.targetObject as HexTileData;
         if (tileData == null || tileData.currentDomain == null)
         {
-            EditorGUI.PropertyField (position, property, label);
+            EditorGUI.PropertyField(position, property, label);
             return;
         }
 
         // Filter props that contain the tile's current domain
         List<HexGridDatabase.PropEntry> filteredProps = database.props.FindAll(p => p.domains != null && p.domains.Contains(tileData.currentDomain));
-        
-        List<string> displayedOptions = new();
-        displayedOptions.Add("None");
+
+        List<string> displayedOptions = new()
+        {
+            "None"
+        };
 
         int currentIndex = 0;
         GameObject currentAssignedProp = property.objectReferenceValue as GameObject;
@@ -56,9 +58,9 @@ public class PropDrawer : PropertyDrawer
         int selectedIndex = EditorGUI.Popup(position, currentIndex, displayedOptions.ToArray());
 
         // Update property reference if a new domain was selected
-        if (selectedIndex > 0 && selectedIndex -1 < filteredProps.Count)
+        if (selectedIndex > 0 && selectedIndex - 1 < filteredProps.Count)
         {
-            property.objectReferenceValue = filteredProps[selectedIndex -1].propPrefab;
+            property.objectReferenceValue = filteredProps[selectedIndex - 1].propPrefab;
         }
     }
 

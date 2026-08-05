@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
+[SelectionBase]
 public class HexTileData : MonoBehaviour
 {
     [Header("database Reference")]
@@ -11,7 +12,7 @@ public class HexTileData : MonoBehaviour
 
     [Header("Tile Data")]
     public int tileIndex;
-    
+
     [TileDomainDropdown]
     public TileDomain currentDomain;
     [SerializeField, HideInInspector] private TileDomain previousDomain;
@@ -23,9 +24,11 @@ public class HexTileData : MonoBehaviour
     public GameObject manualPropSelection;
     [SerializeField, HideInInspector] private GameObject previousManualProp;
 
-    public int propIndex;
-    public float propRotation;
-    public float propScale;
+    public int propIndex = -1;
+    public float propRotation = 0.0f;
+    public float propScale = 1.0f;
+    [SerializeField, HideInInspector] private float previousRotation;
+    [SerializeField, HideInInspector] private float previousScale = 1.0f;
 
     [Header("Settings")]
     public float tileHeight = 0.1f;
@@ -40,6 +43,8 @@ public class HexTileData : MonoBehaviour
         UpdatePropContainerHeight();
 
 #if UNITY_EDITOR
+        SyncPropDropdown();
+
         // 1. Check if Domain changed (Clear props as you decided)
         if (database != null && currentDomain != previousDomain && previousDomain != null)
         {
@@ -61,6 +66,24 @@ public class HexTileData : MonoBehaviour
                 if (this == null) return;
                 UpdateManualProp();
             };
+        }
+
+        // 3. Rotation or Scale changed manually in the Inspector
+        if (hasProp && propsContainer != null && propsContainer.childCount > 0)
+        {
+            if (propRotation != previousRotation || propScale != previousScale)
+            {
+                Transform activeProp = propsContainer.GetChild(0);
+                if (activeProp != null)
+                {
+                    activeProp.localRotation = Quaternion.Euler(0, propRotation, 0);
+                    activeProp.localScale = Vector3.one * propScale;
+
+                    previousRotation = propRotation;
+                    previousScale = propScale;
+                    EditorUtility.SetDirty(this);
+                }
+            }
         }
 #endif
     }
@@ -118,6 +141,7 @@ public class HexTileData : MonoBehaviour
         if (hasProp)
         {
             hasProp = false;
+            manualPropSelection = null;
             propIndex = -1;
 
             for (int i = propsContainer.childCount - 1; i >= 0; i--)
@@ -136,12 +160,26 @@ public class HexTileData : MonoBehaviour
         // Mark the scene as dirty so Unity knows to save these changes
         EditorUtility.SetDirty(this);
     }
-#endif
 
-#if UNITY_EDITOR
     private void UpdateManualProp()
     {
         if (propsContainer == null || database == null) return;
+
+        float targetScale = 1.0f;
+        float targetRotation = 0.0f;
+
+        if (propsContainer.childCount > 0)
+        {
+            Transform existingProp = propsContainer.GetChild(0);
+            targetScale = existingProp.localScale.x;
+            targetRotation = existingProp.localRotation.eulerAngles.y;
+        }
+        else
+        {
+            // Fallback to random rotation and scale of 1
+            targetScale = propScale > 0 ? propScale : 1f;
+            targetRotation = Random.Range(0.0f, 360.0f);
+        }
 
         // Destroy the prop
         for (int i = propsContainer.childCount - 1; i >= 0; i--)
@@ -157,7 +195,7 @@ public class HexTileData : MonoBehaviour
         }
 
         // Find the master index in the database
-        int masterIndex = database.props.FindIndex(t => t.domains.Contains(currentDomain));
+        int masterIndex = database.props.FindIndex(t => t.propPrefab == manualPropSelection);
 
         if (masterIndex == -1)
         {
@@ -167,8 +205,8 @@ public class HexTileData : MonoBehaviour
 
         propIndex = masterIndex;
         hasProp = true;
-        // propRotation = Random.Range(0.0f, 360.0f);
-        // propScale = 1.0f;
+        propRotation = targetRotation;
+        propScale = targetScale;
 
         // Instantiate the prop visual
         GameObject propInstance = Instantiate(manualPropSelection, propsContainer);
@@ -178,6 +216,26 @@ public class HexTileData : MonoBehaviour
         Undo.RegisterCreatedObjectUndo(propInstance, "Manual Prop Placement");
 
         previousManualProp = manualPropSelection;
+        EditorUtility.SetDirty(this);
+    }
+
+    public void SyncPropDropdown()
+    {
+        if (database == null) return;
+
+        if (hasProp && propIndex >= 0 && propIndex < database.props.Count)
+        {
+            manualPropSelection = database.props[propIndex].propPrefab;
+            previousManualProp = manualPropSelection;
+        }
+        else
+        {
+            manualPropSelection = null;
+            previousManualProp = null;
+            hasProp = false;
+            propIndex = -1;
+        }
+
         EditorUtility.SetDirty(this);
     }
 #endif
