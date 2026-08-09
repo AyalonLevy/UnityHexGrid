@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8227133735025419243}
   - component: {fileID: 7044544569861800972}
+  - component: {fileID: 3267955363221784252}
   m_Layer: 0
   m_Name: HexTile
   m_TagString: Untagged
@@ -46,14 +47,35 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83f4cab91f7d4c04bbdde691d70f0868, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HexTileData
+  database: {fileID: 0}
   tileIndex: 0
-  currentDomain: {fileID: 0}
+  currentDomain: {fileID: 11400000, guid: 8b8e408bb6070b248ac5171885b3d11c, type: 2}
+  previousDomain: {fileID: 0}
   hasProp: 0
+  manualPropSelection: {fileID: 0}
+  previousManualProp: {fileID: 0}
   propIndex: 0
   propRotation: 0
   propScale: 0
+  previousRotation: 0
+  previousScale: 1
+  tileHeight: 0.1
   visualsContainer: {fileID: 5716578996116677045}
   propsContainer: {fileID: 2014047214310685767}
+  tileCoordinates: {x: 0, y: 0, z: 0}
+--- !u!114 &3267955363221784252
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2083297749293540714}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 802a18fc44d95e346be2431cd79d87af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Highlight
+  highlightMaterial: {fileID: 2100000, guid: 80aa6773bc444464a9a3b861de7d1ac4, type: 2}
 --- !u!1 &2670619833751218984
 GameObject:
   m_ObjectHideFlags: 0

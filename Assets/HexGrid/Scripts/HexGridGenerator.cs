@@ -3,8 +3,6 @@ using UnityEngine;
 using System.IO;
 
 
-
-
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -45,6 +43,12 @@ public class HexGridGenerator : MonoBehaviour
     [Tooltip("The base empty prefab that holds tile data. Found in Assets/HexGrid/Prefabs/")]
     [SerializeField] private GameObject baseHexTilePrefab;
 
+    [Header("Runtime Features")]
+    [SerializeField] private bool enableGridSelection = true;
+    // TODO: implement:
+    //[SerializeField] private bool enableFogOfWar = true;
+    //[SerializeField] private bool enablePathFinder = true;
+
     [Header("Grid Settings")]
     [Tooltip("The length of the hexagon edge")]
     [SerializeField] private float tileEdgeSize = 1;
@@ -68,7 +72,7 @@ public class HexGridGenerator : MonoBehaviour
 
     [SerializeField] private string fileName = "GridData";
 
-    //[SerializeField] private bool isFlatTopped;
+    private List<CubeTileMapping> currentCubeMapping = new();
 
     private readonly float hexagonAngleDeg = 60.0f;
     private readonly int hexagonSides = 6;
@@ -78,6 +82,7 @@ public class HexGridGenerator : MonoBehaviour
     {
         // Clear existing tiles first
         ClearGrid();
+        currentCubeMapping.Clear();
 
         if (gridDatabase == null)
         {
@@ -141,6 +146,22 @@ public class HexGridGenerator : MonoBehaviour
                 SpawnTile(gridDatabase.hexGridTiles[gridTiles[i].tileIndex], gridTiles[i].tilePosition, gridTiles[i]);
             }
         }
+
+        // Attach the GridManager and inject the mapped data, attach the HexGridSelector
+        if (enableGridSelection && gridContainer != null)
+        {
+            if (!gridContainer.TryGetComponent<GridManager>(out var manager))
+            {
+                manager = gridContainer.gameObject.AddComponent<GridManager>();
+            }
+
+            manager.InjectGridData(currentCubeMapping);
+            if (!gridContainer.TryGetComponent<HexGridSelector>(out _))
+            {
+                gridContainer.gameObject.AddComponent<HexGridSelector>();
+            }
+        }
+
     }
 
     public void ClearGrid()
@@ -290,6 +311,46 @@ public class HexGridGenerator : MonoBehaviour
         return props[0].propPrefab;
     }
 
+    // Translates a physical world position into an exact integer cube coordinate.
+    private Vector3Int WorldToCubeCoordinates(Vector3 position)
+    {
+        float hexRadius = (tileEdgeSize + gapBetweenTiles);
+
+        float q = (Mathf.Sqrt(3.0f) / 3.0f * position.x - 1.0f / 3.0f * position.z) / hexRadius;
+        float r = (2.0f / 3.0f * position.z) / hexRadius;
+        float s = -q - r;
+
+        return CubeRound(q, r, s);
+    }
+
+    // Snaps fractional cube coordinates to the nearest valid integer hex coordinate.
+    private Vector3Int CubeRound(float fracQ, float fracR, float fracS)
+    {
+        int q = Mathf.RoundToInt(fracQ);
+        int r = Mathf.RoundToInt(fracR);
+        int s = Mathf.RoundToInt(fracS);
+
+        float qDiff = Mathf.Abs(q - fracQ);
+        float rDiff = Mathf.Abs(r - fracR);
+        float sDiff = Mathf.Abs(s - fracS);
+
+        // Fix rounding error -> r + g + b = 0
+        if (qDiff > rDiff && qDiff > sDiff)
+        {
+            q = -r - s;
+        }
+        else if (rDiff > sDiff)
+        {
+            r = -q - s;
+        }
+        else
+        {
+            s = -q - r;
+        }
+
+        return new Vector3Int(q, r, s);
+    }
+
     private void SpawnTile(HexGridDatabase.TileEntry tile, Vector3 position, GridData? loadedData = null)
     {
         if (tile.tilePrefab == null) return;
@@ -297,6 +358,14 @@ public class HexGridGenerator : MonoBehaviour
         // Instantiate the structures Base Prefab
         GameObject tileObj = Instantiate(baseHexTilePrefab, position, Quaternion.identity, gridContainer);
         HexTileData tileData = tileObj.GetComponent<HexTileData>();
+
+        currentCubeMapping.Add(new()
+        {
+            tile = tileData,
+            cubeCoordinates = WorldToCubeCoordinates(position),
+        });
+
+        tileData.UpdateTileCoordinates(currentCubeMapping[currentCubeMapping.Count - 1].cubeCoordinates);
 
         tileData.database = this.gridDatabase;
         tileData.InitializeData(this.gridDatabase, loadedData != null ? loadedData.Value.tileIndex : gridDatabase.hexGridTiles.IndexOf(tile), tile.domain);
@@ -309,6 +378,13 @@ public class HexGridGenerator : MonoBehaviour
 
         // Verify the visuals has no transform
         visualMesh.transform.localPosition = Vector3.zero;
+
+        // Add collider to the mesh for selection and path finding
+        if (enableGridSelection)
+        {
+            MeshCollider meshCollider = visualMesh.AddComponent<MeshCollider>();
+            meshCollider.convex = true;
+        }
 
         // Handle Props
         if (loadedData != null)

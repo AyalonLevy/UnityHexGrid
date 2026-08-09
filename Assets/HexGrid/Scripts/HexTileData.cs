@@ -1,4 +1,5 @@
 using UnityEngine;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -6,7 +7,7 @@ using UnityEditor;
 [SelectionBase]
 public class HexTileData : MonoBehaviour
 {
-    [Header("database Reference")]
+    [Header("Database Reference")]
     [Tooltip("Reference to the main database to fetch new meshed when editing.")]
     public HexGridDatabase database;
 
@@ -18,7 +19,7 @@ public class HexTileData : MonoBehaviour
     [SerializeField, HideInInspector] private TileDomain previousDomain;
 
     [Header("PropData")]
-    public bool hasProp;
+    [HideInInspector] public bool hasProp;
 
     [PropDropdown]
     public GameObject manualPropSelection;
@@ -37,6 +38,12 @@ public class HexTileData : MonoBehaviour
     public Transform visualsContainer;
     public Transform propsContainer;
 
+    [Space(20)]
+    [Header("--- FOR DEBUGGING ---")]
+    [Header("Grid Coordinates")]
+    public Vector3Int tileCoordinates;
+
+    private Highlight highlight;
 
     private void OnValidate()
     {
@@ -88,6 +95,17 @@ public class HexTileData : MonoBehaviour
 #endif
     }
 
+    private void Awake()
+    {
+        highlight = GetComponent<Highlight>();
+
+        if (visualsContainer != null)
+        {
+            Transform targetContainer = visualsContainer != null ? visualsContainer : transform;
+            highlight.Initialize(targetContainer);
+        }
+    }
+
     public void UpdatePropContainerHeight()
     {
         if (propsContainer == null)
@@ -116,7 +134,23 @@ public class HexTileData : MonoBehaviour
         propIndex = -1;
     }
 
+    public void EnableHighlight()
+    {
+        if (highlight != null) highlight.SetHighlight(true);
+    }
+
+    public void DisableHighlight()
+    {
+        if (highlight != null) highlight.SetHighlight(false);
+    }
+
 #if UNITY_EDITOR
+    // For debuging
+    public void UpdateTileCoordinates(Vector3Int coord)
+    {
+        tileCoordinates = coord;
+    }
+
     private void SwapTileMesh()
     {
         if (visualsContainer == null || database == null || currentDomain == null) return;
