@@ -12,9 +12,19 @@ public class GridManager : MonoBehaviour
 {
     [Header("Data")]
     [Tooltip("Pre-populated by the HexGridGenerator.")]
-    [HideInInspector] private List<CubeTileMapping> serializedTiles = new();
+    [SerializeField] private List<CubeTileMapping> serializedTiles = new();
 
     private Dictionary<Vector3Int, HexTileData> grid = new();
+
+    public static List<Vector3Int> cubeDirections = new()
+    {
+        new Vector3Int(1, 0, -1),   // E
+        new Vector3Int(0, 1, -1),   // NE
+        new Vector3Int(-1, 1, 0),   // NW
+        new Vector3Int(-1, 0, 1),   // W
+        new Vector3Int(0, -1, 1),   // SE
+        new Vector3Int(1, -1, 0)    // SW
+    };
 
     private void Awake()
     {
@@ -27,7 +37,7 @@ public class GridManager : MonoBehaviour
 
         foreach (CubeTileMapping mapping in serializedTiles)
         {
-            if (mapping.tile != null && !grid.ContainsKey(mapping.tile.tileCoordinates))
+            if (mapping.tile != null && !grid.ContainsKey(mapping.cubeCoordinates))
             {
                 grid.Add(mapping.cubeCoordinates, mapping.tile);
             }
@@ -52,5 +62,23 @@ public class GridManager : MonoBehaviour
         }
 
         return null;
+    }
+
+    public List<HexTileData> GetTileNeighbours(Vector3Int centerCoordinates)
+    {
+        List<HexTileData> neighbours = new();
+
+        foreach (Vector3Int direction in cubeDirections)
+        {
+            Vector3Int neighbourCoord = centerCoordinates + direction;
+            HexTileData neighbourTile = GetTileAt(neighbourCoord);
+
+            if (neighbourTile != null)
+            {
+                neighbours.Add(neighbourTile);
+            }
+        }
+
+        return neighbours;
     }
 }
