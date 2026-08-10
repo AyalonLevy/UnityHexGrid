@@ -147,6 +147,7 @@ public class HexGridSelector : MonoBehaviour
     {
         if (currentlySelectedTile != null)
         {
+            currentlySelectedTile.DisableHighlight();
             currentlySelectedTile = null;
             Debug.Log("Selection Cleared.");
         }

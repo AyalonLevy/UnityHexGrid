@@ -35,6 +35,8 @@ public enum GridShape
 
 public class HexGridGenerator : MonoBehaviour
 {
+    private readonly float FOG_GAP = 0.05f;
+
     [Header("Database Reference")]
     [Tooltip("Assign your external HexGridDatabase asset here.")]
     [SerializeField] private HexGridDatabase gridDatabase;
@@ -45,8 +47,8 @@ public class HexGridGenerator : MonoBehaviour
 
     [Header("Runtime Features")]
     [SerializeField] private bool enableGridSelection = true;
+    [SerializeField] private bool enableFogOfWar = true;
     // TODO: implement:
-    //[SerializeField] private bool enableFogOfWar = true;
     //[SerializeField] private bool enablePathFinder = true;
 
     [Header("Grid Settings")]
@@ -426,6 +428,38 @@ public class HexGridGenerator : MonoBehaviour
             {
                 tileData.hasProp = false;
                 tileData.propIndex = -1;
+            }
+        }
+
+        // Add FoW to the prefabe
+        if (enableFogOfWar)
+        {
+            if (!tileObj.TryGetComponent<HexTileFogController>(out var fogController))
+            {
+                fogController = tileObj.AddComponent<HexTileFogController>();
+            }
+
+            // Create a dedicated child for the Fog Volume
+            GameObject fogVolumeObj = new GameObject("FogVolume");
+            fogVolumeObj.transform.SetParent(tileObj.transform, false);
+            fogVolumeObj.transform.localPosition = new Vector3(0.0f, tileData.tileHeight + FOG_GAP, 0.0f);
+
+            MeshFilter fogMf = fogVolumeObj.AddComponent<MeshFilter>();
+            fogVolumeObj.AddComponent<MeshRenderer>(); // Material is handled by the controller
+
+            float fogThickness = tileData.tileHeight > 0.0f ? tileData.tileHeight : 1.0f;
+            fogMf.sharedMesh = HexVolumeMeshGenerator.CreateHexPlaneMesh(tileEdgeSize);
+
+            // Assign the new object to the controller and initialize
+            fogController.fogVisualObject = fogVolumeObj;
+            fogController.InitializeFoW(enableFogOfWar);
+        }
+        else
+        {
+            // Clean up the component if FOW is disabled so it doesn't waste overhead
+            if (tileObj.TryGetComponent<HexTileFogController>(out var fogController))
+            {
+                DestroyImmediate(fogController);
             }
         }
 

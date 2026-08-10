@@ -38,10 +38,10 @@ public class HexTileData : MonoBehaviour
     public Transform visualsContainer;
     public Transform propsContainer;
 
-    [Space(20)]
-    [Header("--- FOR DEBUGGING ---")]
-    [Header("Grid Coordinates")]
-    public Vector3Int tileCoordinates;
+    //[Space(20)]
+    //[Header("--- FOR DEBUGGING ---")]
+    //[Header("Grid Coordinates")]
+    [HideInInspector] public Vector3Int tileCoordinates;
 
     private Highlight highlight;
 
