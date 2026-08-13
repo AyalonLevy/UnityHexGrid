@@ -157,7 +157,7 @@ public class HexGridGenerator : MonoBehaviour
                 manager = gridContainer.gameObject.AddComponent<GridManager>();
             }
 
-            manager.InjectGridData(currentCubeMapping);
+            manager.InjectGridData(currentCubeMapping, tileEdgeSize);
             if (!gridContainer.TryGetComponent<HexGridSelector>(out _))
             {
                 gridContainer.gameObject.AddComponent<HexGridSelector>();
@@ -313,46 +313,6 @@ public class HexGridGenerator : MonoBehaviour
         return props[0].propPrefab;
     }
 
-    // Translates a physical world position into an exact integer cube coordinate.
-    private Vector3Int WorldToCubeCoordinates(Vector3 position)
-    {
-        float hexRadius = (tileEdgeSize + gapBetweenTiles);
-
-        float q = (Mathf.Sqrt(3.0f) / 3.0f * position.x - 1.0f / 3.0f * position.z) / hexRadius;
-        float r = (2.0f / 3.0f * position.z) / hexRadius;
-        float s = -q - r;
-
-        return CubeRound(q, r, s);
-    }
-
-    // Snaps fractional cube coordinates to the nearest valid integer hex coordinate.
-    private Vector3Int CubeRound(float fracQ, float fracR, float fracS)
-    {
-        int q = Mathf.RoundToInt(fracQ);
-        int r = Mathf.RoundToInt(fracR);
-        int s = Mathf.RoundToInt(fracS);
-
-        float qDiff = Mathf.Abs(q - fracQ);
-        float rDiff = Mathf.Abs(r - fracR);
-        float sDiff = Mathf.Abs(s - fracS);
-
-        // Fix rounding error -> r + g + b = 0
-        if (qDiff > rDiff && qDiff > sDiff)
-        {
-            q = -r - s;
-        }
-        else if (rDiff > sDiff)
-        {
-            r = -q - s;
-        }
-        else
-        {
-            s = -q - r;
-        }
-
-        return new Vector3Int(q, r, s);
-    }
-
     private void SpawnTile(HexGridDatabase.TileEntry tile, Vector3 position, GridData? loadedData = null)
     {
         if (tile.tilePrefab == null) return;
@@ -364,7 +324,7 @@ public class HexGridGenerator : MonoBehaviour
         currentCubeMapping.Add(new()
         {
             tile = tileData,
-            cubeCoordinates = WorldToCubeCoordinates(position),
+            cubeCoordinates = HexGridMath.WorldToCubeCoordinates(position, tileEdgeSize + gapBetweenTiles),
         });
 
         tileData.UpdateTileCoordinates(currentCubeMapping[currentCubeMapping.Count - 1].cubeCoordinates);
@@ -452,7 +412,7 @@ public class HexGridGenerator : MonoBehaviour
 
             // Assign the new object to the controller and initialize
             fogController.fogVisualObject = fogVolumeObj;
-            fogController.InitializeFoW(enableFogOfWar);
+            fogController.InitializeFoW(enableFogOfWar, tileData);
         }
         else
         {

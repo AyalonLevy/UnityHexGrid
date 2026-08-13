@@ -14,6 +14,10 @@ public class GridManager : MonoBehaviour
     [Tooltip("Pre-populated by the HexGridGenerator.")]
     [SerializeField] private List<CubeTileMapping> serializedTiles = new();
 
+    [Header("Grid Metrics")]
+    [SerializeField, Tooltip("Stored automatically by the Generator")]
+    private float hexRadius = 1.0f;
+
     private Dictionary<Vector3Int, HexTileData> grid = new();
 
     public static List<Vector3Int> cubeDirections = new()
@@ -25,6 +29,8 @@ public class GridManager : MonoBehaviour
         new Vector3Int(0, -1, 1),   // SE
         new Vector3Int(1, -1, 0)    // SW
     };
+
+    public float HexRadius => hexRadius;
 
     private void Awake()
     {
@@ -44,9 +50,10 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    public void InjectGridData(List<CubeTileMapping> generatedTiles)
+    public void InjectGridData(List<CubeTileMapping> generatedTiles, float radius)
     {
         serializedTiles = new(generatedTiles);
+        hexRadius = radius;
 
 #if UNITY_EDITOR
         // Tell Unity this object's data changed so it saves the list to the scene file
@@ -80,5 +87,26 @@ public class GridManager : MonoBehaviour
         }
 
         return neighbours;
+    }
+
+    /// <summary>
+    /// Returns all tiles within a specific radius from a center cube coordinate.
+    /// </summary>
+    public List<HexTileData> GetTilesInRadius(Vector3Int center, int radius)
+    {
+        List<HexTileData> tilesInRadius = new();
+
+        foreach (var tile in grid)
+        {
+            if (HexGridMath.GetCubeDistance(center, tile.Key) <= radius)
+            {
+                if (tile.Value != null)
+                {
+                    tilesInRadius.Add(tile.Value);
+                }
+            }
+        }
+
+        return tilesInRadius;
     }
 }
