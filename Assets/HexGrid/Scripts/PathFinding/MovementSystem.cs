@@ -13,6 +13,7 @@ public class MovementSystem : MonoBehaviour
     private BFSResult movementRange = new();
     private List<Vector3Int> currentPath = new();
     private Unit selectedUnit;
+    private Unit movingUnit;
 
     public bool HasActiveUnit => selectedUnit != null;
 
@@ -41,6 +42,11 @@ public class MovementSystem : MonoBehaviour
         if (hexGridSelector != null)
         {
             hexGridSelector.OnTileClicked -= ProcessMovementClick;
+        }
+
+        if (movingUnit != null)
+        {
+            movingUnit.MovementFinished -= HandleMovementFinished;
         }
     }
 
@@ -73,6 +79,10 @@ public class MovementSystem : MonoBehaviour
 
     private void HandleUnitDeselected(Unit unit)
     {
+        // If the unit is currently moving, do not hide the path highlights prematurely.
+        // HandleMovementFinished will clean them up when the unit reaches its destination.
+        if (movingUnit != null) return;
+
         HideRange();
         selectedUnit = null;
     }
@@ -85,10 +95,13 @@ public class MovementSystem : MonoBehaviour
         if (IsHexInRange(clickedTile.tileCoordinates))
         {
             // 1. Generate and display the path to the clicked tile
-            currentPath = movementRange.GetPathTo(clickedTile.tileCoordinates);
+            //currentPath = movementRange.GetPathTo(clickedTile.tileCoordinates);
 
             // Highlight the path visuals
             ShowPath(clickedTile.tileCoordinates);
+
+            movingUnit = selectedUnit;
+            movingUnit.MovementFinished += HandleMovementFinished;
 
             // 2. Execute movement along that path
             MoveUnit();
@@ -117,6 +130,25 @@ public class MovementSystem : MonoBehaviour
         }
         movementRange = new();
         currentPath.Clear(); // Clears lingering path references
+    }
+
+    private void HandleMovementFinished(Unit unit)
+    {
+        unit.MovementFinished -= HandleMovementFinished;
+
+        // Reset and turn off path highlights once the unit reaches its target
+        foreach (Vector3Int hexPosition in currentPath)
+        {
+            HexTileData tile = gridManager.GetTileAt(hexPosition);
+            if (tile != null)
+            {
+                tile.DisableHighlight(true);
+            }
+        }
+
+        movementRange = new();
+        currentPath.Clear();
+        if (movingUnit == unit) movingUnit = null;
     }
 
     public void ShowRange(Unit unit)
@@ -158,18 +190,27 @@ public class MovementSystem : MonoBehaviour
 
     public void ShowPath(Vector3Int selectedHexPosition)
     {
-        if (movementRange.GetRangePositions().Contains(selectedHexPosition))
+        if (IsHexInRange(selectedHexPosition))
         {
-            foreach (Vector3Int hexPosition in currentPath)
-            {
-                gridManager.GetTileAt(hexPosition).ResetHighlight();
-            }
-
             currentPath = movementRange.GetPathTo(selectedHexPosition);
+            HashSet<Vector3Int> pathSet = new(currentPath);
 
-            foreach (Vector3Int hexPosition in currentPath)
+            // Iterate through all tiles in the movement range
+            foreach (Vector3Int hexPosition in movementRange.GetRangePositions())
             {
-                gridManager.GetTileAt(hexPosition).HighlightPath();
+                HexTileData tile = gridManager.GetTileAt(hexPosition);
+                if (tile == null) continue;
+
+                if (pathSet.Contains(hexPosition))
+                {
+                    // If tile is in the path, apply highlight
+                    tile.EnableHighlight(true);
+                }
+                else
+                {
+                    // If tile is in range but NOT in the path, remove highlight completely
+                    tile.DisableHighlight(false);
+                }
             }
         }
     }

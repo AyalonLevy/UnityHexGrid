@@ -9,8 +9,6 @@ public class Highlight : MonoBehaviour
     private GameObject generatedOverlayObject;
     private MeshRenderer overlayRenderer;
 
-    private Color validSpaceColor = Color.green;
-
     public void InitializeHighlight(Transform targetContainer)
     {
         // Fallback to transform only if null
@@ -54,27 +52,6 @@ public class Highlight : MonoBehaviour
                 // Use sharedMaterial to avoid material instance leaks
                 overlayRenderer.sharedMaterial = highlightMat;
             }
-        }
-    }
-
-    // TODO: Check if it is even used
-    internal void HighlightValidPath()
-    {
-        if (overlayRenderer != null && overlayRenderer.material != null)
-        {
-            // Change color to indicate the active path (e.g., Yellow/Gold)
-            overlayRenderer.sharedMaterial.SetColor("_HighlightColor", Color.yellow);
-            Debug.Log("All is Yellow!");
-        }
-    }
-
-    internal void ResetHighlight()
-    {
-        if (overlayRenderer != null && overlayRenderer.material != null)
-        {
-            // Reset color back to the standard valid space highlight color
-            overlayRenderer.sharedMaterial.SetColor("_HighlightColor", validSpaceColor);
-            Debug.Log("All is Green!");
         }
     }
 }

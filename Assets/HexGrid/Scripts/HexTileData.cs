@@ -186,16 +186,6 @@ public class HexTileData : MonoBehaviour
         if (highlight != null) highlight.SetHighlight(false, isPath ? pathMaterial : highlightMaterial);
     }
 
-    internal void ResetHighlight()
-    {
-        highlight?.ResetHighlight();
-    }
-
-    internal void HighlightPath()
-    {
-        highlight?.HighlightValidPath();
-    }
-
 #if UNITY_EDITOR
     // For debuging
     public void UpdateTileCoordinates(Vector3Int coord)

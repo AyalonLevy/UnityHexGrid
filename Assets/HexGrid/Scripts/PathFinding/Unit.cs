@@ -34,15 +34,9 @@ public class Unit : MonoBehaviour
         }
     }
 
-    internal void Deselect()
-    {
-        highlight?.SetHighlight(false, highlightMaterial);
-    }
+    internal void Deselect() => highlight.SetHighlight(false, highlightMaterial);
 
-    public void Select()
-    {
-        highlight?.SetHighlight(true, highlightMaterial);
-    }
+    public void Select() => highlight.SetHighlight(true, highlightMaterial);
 
     internal void MoveThroughPath(List<Vector3> currentPath)
     {
