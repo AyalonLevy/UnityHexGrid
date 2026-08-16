@@ -68,6 +68,10 @@ public class HexTileFogController : MonoBehaviour
             enabled = false;
             return;
         }
+        else
+        {
+            tileData.isExplored = false;
+        }
 
         // Apply custom fog material to the fog visual mesh if assigned
         if (fogVisualObject != null && fogMaterial != null)
@@ -87,6 +91,11 @@ public class HexTileFogController : MonoBehaviour
         if (!isFogOfWarEnabled) return;
 
         currentState = newState;
+
+        if (tileData != null)
+        {
+            tileData.isExplored = (currentState != FogState.Hidden);
+        }
 
         switch (currentState)
         {
@@ -185,19 +194,16 @@ public class HexTileFogController : MonoBehaviour
     private void ToggleProps(bool active)
     {
         if (propsContainer != null) propsContainer.SetActive(active);
-        else Debug.Log("No Prop Container");
     }
 
     private void ToggleVisuals(bool active)
     {
         if (visualsContainer != null) visualsContainer.SetActive(active);
-        else Debug.Log("No Visual Container");
     }
 
     private void ToggleFogVisual(bool active)
     {
         if (fogVisualObject != null) fogVisualObject.SetActive(active);
-        else Debug.Log("No FogObject Container");
     }
 
     public FogState GetCurrentState() => currentState;

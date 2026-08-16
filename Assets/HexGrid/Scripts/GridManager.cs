@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -108,5 +109,10 @@ public class GridManager : MonoBehaviour
         }
 
         return tilesInRadius;
+    }
+
+    public Vector3Int GetClosestHex(Vector3 worldPosition)
+    {
+        return HexGridMath.WorldToCubeCoordinates(worldPosition, hexRadius);
     }
 }

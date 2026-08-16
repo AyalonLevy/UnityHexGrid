@@ -48,8 +48,7 @@ public class HexGridGenerator : MonoBehaviour
     [Header("Runtime Features")]
     [SerializeField] private bool enableGridSelection = true;
     [SerializeField] private bool enableFogOfWar = true;
-    // TODO: implement:
-    //[SerializeField] private bool enablePathFinder = true;
+    [SerializeField] private bool enablePathFinder = true;
 
     [Header("Grid Settings")]
     [Tooltip("The length of the hexagon edge")]
@@ -158,12 +157,40 @@ public class HexGridGenerator : MonoBehaviour
             }
 
             manager.InjectGridData(currentCubeMapping, tileEdgeSize);
+
             if (!gridContainer.TryGetComponent<HexGridSelector>(out _))
             {
                 gridContainer.gameObject.AddComponent<HexGridSelector>();
             }
         }
 
+        // Attach the UnitSelector and MovementSystem
+        if (enablePathFinder && gridContainer != null)
+        {
+            if (!gridContainer.TryGetComponent<GridManager>(out var manager))
+            {
+                manager = gridContainer.gameObject.AddComponent<GridManager>();
+            }
+
+            manager.InjectGridData(currentCubeMapping, tileEdgeSize);
+
+            if (!gridContainer.TryGetComponent<UnitSelector>(out var unitSelector))
+            {
+                unitSelector = gridContainer.gameObject.AddComponent<UnitSelector>();
+            }
+
+            if (!gridContainer.TryGetComponent<HexGridSelector>(out var gridSelector))
+            {
+                gridContainer.gameObject.AddComponent<HexGridSelector>();
+            }
+
+            if (!gridContainer.TryGetComponent<MovementSystem>(out var ms))
+            {
+                ms = gridContainer.gameObject.AddComponent<MovementSystem>();
+            }
+
+            ms.InjectComponents(manager, unitSelector, gridSelector);
+        }
     }
 
     public void ClearGrid()
@@ -400,18 +427,18 @@ public class HexGridGenerator : MonoBehaviour
             }
 
             // Create a dedicated child for the Fog Volume
-            GameObject fogVolumeObj = new GameObject("FogVolume");
-            fogVolumeObj.transform.SetParent(tileObj.transform, false);
-            fogVolumeObj.transform.localPosition = new Vector3(0.0f, tileData.tileHeight + FOG_GAP, 0.0f);
+            GameObject fogObj = new GameObject("Fog");
+            fogObj.transform.SetParent(tileObj.transform, false);
+            fogObj.transform.localPosition = new Vector3(0.0f, tileData.tileHeight + FOG_GAP, 0.0f);
 
-            MeshFilter fogMf = fogVolumeObj.AddComponent<MeshFilter>();
-            fogVolumeObj.AddComponent<MeshRenderer>(); // Material is handled by the controller
+            MeshFilter fogMf = fogObj.AddComponent<MeshFilter>();
+            fogObj.AddComponent<MeshRenderer>(); // Material is handled by the controller
 
             float fogThickness = tileData.tileHeight > 0.0f ? tileData.tileHeight : 1.0f;
             fogMf.sharedMesh = HexVolumeMeshGenerator.CreateHexPlaneMesh(tileEdgeSize);
 
             // Assign the new object to the controller and initialize
-            fogController.fogVisualObject = fogVolumeObj;
+            fogController.fogVisualObject = fogObj;
             fogController.InitializeFoW(enableFogOfWar, tileData);
         }
         else
@@ -423,9 +450,17 @@ public class HexGridGenerator : MonoBehaviour
             }
         }
 
+        // Path finding
+        if (enablePathFinder)
+        {
+            tileData.EvaluateHexType();
+
+
+        }
+
 #if UNITY_EDITOR
-        // Sync the dropdown so the Inspector instantly reflects the generated data
-        tileData.SyncPropDropdown();
+            // Sync the dropdown so the Inspector instantly reflects the generated data
+            tileData.SyncPropDropdown();
 
         // Allows undo support when deleting in edit mode
         Undo.RegisterCreatedObjectUndo(tileObj, "Generate Hex Tile");

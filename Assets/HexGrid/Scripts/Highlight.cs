@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class Highlight : MonoBehaviour
@@ -9,7 +10,18 @@ public class Highlight : MonoBehaviour
     [SerializeField] private float scaleMultiplier = 1.02f;
 
     private GameObject generatedOverlayObject;
+    private MeshRenderer overlayRenderer;
 
+    private Color validSpaceColor = Color.green;
+    private Color originalHighlightColor;
+
+    private void Awake()
+    {
+        if (highlightMaterial != null)
+        {
+            originalHighlightColor = highlightMaterial.GetColor("_HighlightColor");
+        }
+    }
 
     public void Initialize(Transform targetContainer)
     {
@@ -56,6 +68,24 @@ public class Highlight : MonoBehaviour
         if (generatedOverlayObject != null)
         {
             generatedOverlayObject.SetActive(state);
+        }
+    }
+
+    internal void HighlightValidPath()
+    {
+        if (overlayRenderer != null && overlayRenderer.material != null)
+        {
+            // Change color to indicate the active path (e.g., Yellow/Gold)
+            overlayRenderer.material.SetColor("_HighlightColor", Color.yellow);
+        }
+    }
+
+    internal void ResetHighlight()
+    {
+        if (overlayRenderer != null && overlayRenderer.material != null)
+        {
+            // Reset color back to the standard valid space highlight color
+            overlayRenderer.material.SetColor("_HighlightColor", validSpaceColor);
         }
     }
 }

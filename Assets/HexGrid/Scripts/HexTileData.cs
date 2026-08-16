@@ -1,8 +1,19 @@
 using UnityEngine;
 
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
+
+public enum HexType
+{
+    None,
+    Default,
+    Difficult,
+    Road,
+    Water,
+    Obstacle
+}
 
 [SelectionBase]
 public class HexTileData : MonoBehaviour
@@ -17,6 +28,7 @@ public class HexTileData : MonoBehaviour
     [TileDomainDropdown]
     public TileDomain currentDomain;
     [SerializeField, HideInInspector] private TileDomain previousDomain;
+    public HexType hexType;
 
     [Header("PropData")]
     [HideInInspector] public bool hasProp;
@@ -38,9 +50,7 @@ public class HexTileData : MonoBehaviour
     public Transform visualsContainer;
     public Transform propsContainer;
 
-    //[Space(20)]
-    //[Header("--- FOR DEBUGGING ---")]
-    //[Header("Grid Coordinates")]
+    [HideInInspector] public bool isExplored = true;
     [HideInInspector] public Vector3Int tileCoordinates;
 
     private Highlight highlight;
@@ -62,6 +72,7 @@ public class HexTileData : MonoBehaviour
                 // Safety check in case the user deletes the object the exact frame they modify it
                 if (this == null) return;
                 SwapTileMesh();
+                EvaluateHexType();
             };
         }
 
@@ -72,6 +83,7 @@ public class HexTileData : MonoBehaviour
             {
                 if (this == null) return;
                 UpdateManualProp();
+                EvaluateHexType();
             };
         }
 
@@ -132,6 +144,24 @@ public class HexTileData : MonoBehaviour
 
         hasProp = false;
         propIndex = -1;
+
+        hexType = HexType.Default;
+        EvaluateHexType();
+    }
+
+    public int GetCost() => hexType switch
+    {
+        HexType.Road => 5,
+        HexType.Default => 10,
+        HexType.Difficult => 20,
+        HexType.Water => 30,    // TODO: add an option to go on water - "Jesus mode"
+        HexType.Obstacle => int.MaxValue,
+        _ => 10 // Default
+    };
+
+    public bool IsObstacle()
+    {
+        return this.hexType == HexType.Obstacle;
     }
 
     public void EnableHighlight()
@@ -142,6 +172,16 @@ public class HexTileData : MonoBehaviour
     public void DisableHighlight()
     {
         if (highlight != null) highlight.SetHighlight(false);
+    }
+
+    internal void ResetHighlight()
+    {
+        highlight.ResetHighlight();
+    }
+
+    internal void HighlightPath()
+    {
+        highlight.HighlightValidPath();
     }
 
 #if UNITY_EDITOR
@@ -224,6 +264,7 @@ public class HexTileData : MonoBehaviour
             hasProp = false;
             propIndex = -1;
             previousManualProp = null;
+            EvaluateHexType();
             EditorUtility.SetDirty(this);
             return;
         }
@@ -268,6 +309,32 @@ public class HexTileData : MonoBehaviour
             previousManualProp = null;
             hasProp = false;
             propIndex = -1;
+        }
+
+        EditorUtility.SetDirty(this);
+    }
+
+    public void EvaluateHexType()
+    {
+        // 1. Check if domain implies Water
+        if (currentDomain != null && currentDomain.name.IndexOf("water", System.StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            hexType = HexType.Water;
+        }
+        else
+        {
+            // 2. Check props: Having a prop makes standard terrain Difficult, removing it resets to Default
+            if (hasProp && database != null && propIndex >= 0 && propIndex < database.props.Count)
+            {
+                HexType propEffect = database.props[propIndex].terrainEffect;
+
+                hexType = propEffect == HexType.None ? HexType.Difficult : propEffect;
+            }
+            else
+            {
+                // 3. Fallback to default if no special domain or prop overrides it
+                hexType = HexType.Default;
+            }
         }
 
         EditorUtility.SetDirty(this);

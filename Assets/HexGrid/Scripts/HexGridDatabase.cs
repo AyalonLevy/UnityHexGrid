@@ -22,6 +22,10 @@ public class HexGridDatabase : ScriptableObject
         public List<TileDomain> domains;
         [Range(0.0f, 1.0f)]
         public float spawnChance;
+
+        [Header("Gameplay Effects")]
+        public HexType terrainEffect;
+
     }
 
     [Header("Available Domains")]

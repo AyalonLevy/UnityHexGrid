@@ -1,116 +1,26 @@
+using System;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(GridManager))]
-public class HexGridSelector : MonoBehaviour
+public class HexGridSelector : Selector
 {
-    private const float MAX_RAYCAST_DISTANCE = 1000.0f;
-
-    [Header("Optional Input Asset Configuration")]
-    [Tooltip("Leave blank to use default New Input System device polling (Mouse/Touch).")]
-    [SerializeField] private InputActionReference selectAction;
-
-    [Tooltip("Leave blank to use default New Input System device polling (Mouse/Touch).")]
-    [SerializeField] private InputActionReference pointerPositionAction;
-
-    [Header("Dependencies")]
-    [SerializeField] private Camera mainCamera;
-
-    private GridManager gridManager;
     private HexTileData currentlySelectedTile;
 
-    private void Awake()
+    // Public API Events for external tool integration
+    public event Action<HexTileData> OnTileSelected;
+    public event Action<HexTileData> OnTileDeselected;
+
+    public HexTileData CurrentSelectedTile => currentlySelectedTile;
+
+    protected override void HandleRaycastHit(RaycastHit hit)
     {
-        gridManager = GetComponent<GridManager>();
+        HexTileData hitTile = hit.collider.GetComponentInParent<HexTileData>();
 
-        if (mainCamera == null)
+        if (hitTile != null)
         {
-            mainCamera = Camera.main;
-        }
-    }
-
-    private void OnEnable()
-    {
-        if (selectAction != null)
-        {
-            selectAction.action.Enable();
-            selectAction.action.performed += OnSelectPerformed;
-        }
-
-        if (pointerPositionAction != null)
-        {
-            pointerPositionAction.action.Enable();
-        }
-    }
-
-    private void OnDisable()
-    {
-        if (selectAction != null)
-        {
-            selectAction.action.performed -= OnSelectPerformed;
-            selectAction.action.Disable();
-        }
-
-        if (pointerPositionAction != null)
-        {
-            pointerPositionAction.action.Disable();
-        }
-    }
-
-    private void Update()
-    {
-        // Fallback: If no custom InputActionReference is assigned, poll the New Input System directly so it works instantly with zero setup.
-        if (selectAction == null)
-        {
-            bool isPressed = false;
-            Vector2 pointerPos = Vector2.zero;
-
-            // Check Mouse
-            if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
-            {
-                isPressed = true;
-                pointerPos = Mouse.current.position.ReadValue();
-            }
-            // Checl Touch / Generic Pointer (Mobile support)
-            else if (Pointer.current != null && Pointer.current.press.wasPressedThisFrame)
-            {
-                isPressed = true;
-                pointerPos = Pointer.current.position.ReadValue();
-            }
-
-            if (isPressed)
-            {
-                ProcessClickAt(pointerPos);
-            }
-        }
-    }
-
-    private void OnSelectPerformed(InputAction.CallbackContext context)
-    {
-        if (pointerPositionAction == null || mainCamera == null) return;
-
-        Vector2 screenPosition = pointerPositionAction.action.ReadValue<Vector2>();
-
-        ProcessClickAt(screenPosition);
-    }
-
-    /// <summary>
-    /// PUBLIC API: Call this method directly from your own 
-    /// custom controllers, PlayerInput components, or UI managers.
-    /// </summary>
-    public void ProcessClickAt(Vector2 screenPosition)
-    {
-        if (mainCamera == null) return;
-
-        Ray ray = mainCamera.ScreenPointToRay(screenPosition);
-
-        if (Physics.Raycast(ray, out RaycastHit hit, MAX_RAYCAST_DISTANCE))
-        {
-            HexTileData hitTile = hit.collider.GetComponentInParent<HexTileData>();
-
             if (hitTile != currentlySelectedTile)
             {
-                ProcessTileSelection(hitTile);
+                SelectTile(hitTile);
             }
             else
             {
@@ -123,14 +33,17 @@ public class HexGridSelector : MonoBehaviour
         }
     }
 
-
-    private void ProcessTileSelection(HexTileData newTile)
+    protected override void HandleRaycastMiss()
     {
-        if (newTile == currentlySelectedTile) return;
+        ClearSelection();
+    }
 
+    private void SelectTile(HexTileData newTile)
+    {
         if (currentlySelectedTile != null)
         {
             currentlySelectedTile.DisableHighlight();
+            OnTileDeselected?.Invoke(currentlySelectedTile);
         }
 
         currentlySelectedTile = newTile;
@@ -138,8 +51,8 @@ public class HexGridSelector : MonoBehaviour
         if (currentlySelectedTile != null)
         {
             currentlySelectedTile.EnableHighlight();
-
-            Debug.Log($"Selected Tile at Cube Coordinates {currentlySelectedTile.tileCoordinates} ");
+            OnTileSelected?.Invoke(currentlySelectedTile);
+            Debug.Log($"Selected Tile at cube coordinates {currentlySelectedTile.tileCoordinates}");
         }
     }
 
@@ -148,8 +61,9 @@ public class HexGridSelector : MonoBehaviour
         if (currentlySelectedTile != null)
         {
             currentlySelectedTile.DisableHighlight();
+            OnTileDeselected?.Invoke(currentlySelectedTile);
             currentlySelectedTile = null;
-            Debug.Log("Selection Cleared.");
+            Debug.Log("Tile Selection Cleared.");
         }
     }
 }

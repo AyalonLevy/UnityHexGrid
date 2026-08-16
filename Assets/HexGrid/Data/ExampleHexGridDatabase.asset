@@ -39,45 +39,56 @@ MonoBehaviour:
     domains:
     - {fileID: 11400000, guid: 8b8e408bb6070b248ac5171885b3d11c, type: 2}
     spawnChance: 0.2
+    terrainEffect: 2
   - propPrefab: {fileID: 1507965864094417781, guid: dd2b7bb106b57d04fbc140fc6b38f232, type: 3}
     domains:
     - {fileID: 11400000, guid: 8b8e408bb6070b248ac5171885b3d11c, type: 2}
     spawnChance: 0.15
+    terrainEffect: 2
   - propPrefab: {fileID: 8384960001082739201, guid: 66badb568f068e643bd9fb35e86cddb9, type: 3}
     domains:
     - {fileID: 11400000, guid: 8b8e408bb6070b248ac5171885b3d11c, type: 2}
     spawnChance: 0.3
+    terrainEffect: 5
   - propPrefab: {fileID: 7606757448598989393, guid: cab2c63843f95bf43a23cc6bb0e154cc, type: 3}
     domains:
     - {fileID: 11400000, guid: 2eba24719c2a7114ba86814d38697dcf, type: 2}
     - {fileID: 11400000, guid: 8b8e408bb6070b248ac5171885b3d11c, type: 2}
     spawnChance: 0.2
+    terrainEffect: 5
   - propPrefab: {fileID: 8468182502476741364, guid: 671cfa5578c34e448b664c1673ae4d95, type: 3}
     domains:
     - {fileID: 11400000, guid: 8b8e408bb6070b248ac5171885b3d11c, type: 2}
     - {fileID: 11400000, guid: 2eba24719c2a7114ba86814d38697dcf, type: 2}
     spawnChance: 0.6
+    terrainEffect: 2
   - propPrefab: {fileID: 9082607205502941140, guid: 80071ac975590f24ba34662d1aa4cd5c, type: 3}
     domains:
     - {fileID: 11400000, guid: 2eba24719c2a7114ba86814d38697dcf, type: 2}
     spawnChance: 0.4
+    terrainEffect: 2
   - propPrefab: {fileID: 2080492825710397588, guid: 5c01b15a36e933546a26e721bdf0ef6c, type: 3}
     domains:
     - {fileID: 11400000, guid: 2eba24719c2a7114ba86814d38697dcf, type: 2}
     spawnChance: 0.3
+    terrainEffect: 2
   - propPrefab: {fileID: 2046310655411450758, guid: d2472877481b3a543b3ebc4aaa00b153, type: 3}
     domains:
     - {fileID: 11400000, guid: 20e3a69104887fa4fa836244d98c4dd9, type: 2}
     spawnChance: 0.3
+    terrainEffect: 5
   - propPrefab: {fileID: 7758743455125150416, guid: ffbb75ce14717aa4681621807c939eba, type: 3}
     domains:
     - {fileID: 11400000, guid: 20e3a69104887fa4fa836244d98c4dd9, type: 2}
     spawnChance: 0.4
+    terrainEffect: 5
   - propPrefab: {fileID: 6266794535788861558, guid: 8ac833a415be44044938b62ed8ef2a58, type: 3}
     domains:
     - {fileID: 11400000, guid: 20e3a69104887fa4fa836244d98c4dd9, type: 2}
     spawnChance: 0.2
+    terrainEffect: 2
   - propPrefab: {fileID: 6598115860663606801, guid: 7aba77aeed48e8e44b7d93d1243f4285, type: 3}
     domains:
     - {fileID: 11400000, guid: 20e3a69104887fa4fa836244d98c4dd9, type: 2}
     spawnChance: 0.2
+    terrainEffect: 2
