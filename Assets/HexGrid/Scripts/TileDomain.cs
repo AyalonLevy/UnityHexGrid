@@ -4,5 +4,4 @@ using UnityEngine;
 public class TileDomain : ScriptableObject
 {
     public string displayName;
-    public Color editorTint = Color.white;
 }

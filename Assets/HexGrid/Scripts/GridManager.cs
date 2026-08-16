@@ -10,14 +10,17 @@ public struct CubeTileMapping
 
 public class GridManager : MonoBehaviour
 {
+    // Data structure for serializing tile mappings for Unity scene saving. Populated by HexGridGenerator during grid generation.
     [Header("Data")]
-    [Tooltip("Pre-populated by the HexGridGenerator.")]
+    [Tooltip("Pre-populated by the HexGridGenerator for scene persistence.")]
     [SerializeField] private List<CubeTileMapping> serializedTiles = new();
 
+    // The radius of each hexagon in the grid, used for coordinate conversion. Automatically set by HexGridGenerator during generation.
     [Header("Grid Metrics")]
-    [SerializeField, Tooltip("Stored automatically by the Generator")]
+    [SerializeField, Tooltip("Hexagon radius, stored automatically by the Generator for coordinate calculations.")]
     private float hexRadius = 1.0f;
 
+    // Runtime dictionary mapping cube coordinates to HexTileData objects for fast lookup. Initialized in Awake() and populated by serializedTiles data.
     private Dictionary<Vector3Int, HexTileData> grid = new();
 
     public static List<Vector3Int> cubeDirections = new()

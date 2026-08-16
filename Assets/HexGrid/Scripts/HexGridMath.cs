@@ -29,7 +29,7 @@ public class HexGridMath
         float rDiff = Mathf.Abs(r - fracR);
         float sDiff = Mathf.Abs(s - fracS);
 
-        // Fix rounding error -> r + g + b = 0
+        // Fix rounding error -> q + r + s = 0
         if (qDiff > rDiff && qDiff > sDiff)
         {
             q = -r - s;

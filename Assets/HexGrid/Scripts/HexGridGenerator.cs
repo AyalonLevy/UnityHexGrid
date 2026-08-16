@@ -328,7 +328,7 @@ public class HexGridGenerator : MonoBehaviour
 #endif
     }
 
-    private HexGridDatabase.TileEntry GetRandomWeightedTile(List<HexGridDatabase.TileEntry> tiles)
+    private HexGridDatabase.TileData GetRandomWeightedTile(List<HexGridDatabase.TileData> tiles)
     {
         float totalWeight = 0.0f;
         foreach (var tile in tiles)
@@ -354,7 +354,7 @@ public class HexGridGenerator : MonoBehaviour
         return tiles[0];
     }
 
-    private GameObject GetRandomWeightedProp(List<HexGridDatabase.PropEntry> props)
+    private GameObject GetRandomWeightedProp(List<HexGridDatabase.PropData> props)
     {
         float totalWeight = 0.0f;
         foreach (var prop in props)
@@ -379,7 +379,7 @@ public class HexGridGenerator : MonoBehaviour
         return props[0].propPrefab;
     }
 
-    private void SpawnTile(HexGridDatabase.TileEntry tile, Vector3 position, GridData? loadedData = null)
+    private void SpawnTile(HexGridDatabase.TileData tile, Vector3 position, GridData? loadedData = null)
     {
         if (tile.tilePrefab == null) return;
 
@@ -621,7 +621,7 @@ public class HexGridGenerator : MonoBehaviour
     private GameObject GetPropToSpawn(TileDomain tileDomain)
     {
         // Filter all the props based on the domain
-        List<HexGridDatabase.PropEntry> filteredProps = gridDatabase.props.FindAll(p => p.domains != null && p.domains.Contains(tileDomain));
+        List<HexGridDatabase.PropData> filteredProps = gridDatabase.props.FindAll(p => p.domains != null && p.domains.Contains(tileDomain));
 
         if (filteredProps.Count == 0) return null;
 

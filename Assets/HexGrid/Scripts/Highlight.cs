@@ -2,9 +2,6 @@ using UnityEngine;
 
 public class Highlight : MonoBehaviour
 {
-    //[Tooltip("The unlit transparent material used for the highlight glow.")]
-    //[SerializeField] private Material highlightMaterial;
-
     [Tooltip("Slight scale multiplier to prevent Z-fighting (flickering) over the original mesh.")]
     [SerializeField] private float scaleMultiplier = 1.02f;
 
@@ -13,14 +10,6 @@ public class Highlight : MonoBehaviour
 
     private Color validSpaceColor = Color.green;
     private Color originalHighlightColor;
-
-    //private void Awake()
-    //{
-    //    if (highlightMaterial != null)
-    //    {
-    //        originalHighlightColor = highlightMaterial.GetColor("_HighlightColor");
-    //    }
-    //}
 
     public void InitializeHighlight(Transform targetContainer)
     {
@@ -47,16 +36,6 @@ public class Highlight : MonoBehaviour
         MeshRenderer overlayRenderer = generatedOverlayObject.AddComponent<MeshRenderer>();
 
         overlayMeshFilter.sharedMesh = sourceMeshFilter.sharedMesh;
-
-        //if (highlightMaterial != null)
-        //{
-        //    // Create a safe instance of the material so it doesn't leak shared asset modifications
-        //    overlayRenderer.sharedMaterial = new(highlightMaterial);
-        //}
-        //else
-        //{
-        //    Debug.LogWarning("Highlight: No highlight material assigned!", this);
-        //}
 
         // Start hidden
         generatedOverlayObject.SetActive(false);

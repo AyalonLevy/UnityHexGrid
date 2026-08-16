@@ -5,7 +5,7 @@ using UnityEngine;
 public class HexGridDatabase : ScriptableObject
 {
     [System.Serializable]
-    public struct TileEntry
+    public struct TileData
     {
         public GameObject tilePrefab;
         public TileDomain domain;
@@ -15,7 +15,7 @@ public class HexGridDatabase : ScriptableObject
     }
 
     [System.Serializable]
-    public struct PropEntry
+    public struct PropData
     {
         public GameObject propPrefab;
         [Tooltip("List of all valid tile domains where this prop can be spawned.")]
@@ -32,8 +32,8 @@ public class HexGridDatabase : ScriptableObject
     public List<TileDomain> availableDomains = new();
 
     [Header("Tiles Database")]
-    public List<TileEntry> hexGridTiles = new();
+    public List<TileData> hexGridTiles = new();
 
     [Header("Props Database")]
-    public List<PropEntry> props = new();
+    public List<PropData> props = new();
 }

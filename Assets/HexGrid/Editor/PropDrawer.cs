@@ -31,7 +31,7 @@ public class PropDrawer : PropertyDrawer
         }
 
         // Filter props that contain the tile's current domain
-        List<HexGridDatabase.PropEntry> filteredProps = database.props.FindAll(p => p.domains != null && p.domains.Contains(tileData.currentDomain));
+        List<HexGridDatabase.PropData> filteredProps = database.props.FindAll(p => p.domains != null && p.domains.Contains(tileData.currentDomain));
 
         List<string> displayedOptions = new()
         {
