@@ -8,7 +8,7 @@ public class Unit : MonoBehaviour
 {
     [Header("Movement Settings")]
     [SerializeField] private int movementPoints = 20;
-    
+
     public int MovementPoints { get => movementPoints; }
 
     [SerializeField] private float movementDuration = 1.0f;
