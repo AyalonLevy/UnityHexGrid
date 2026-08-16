@@ -26,11 +26,8 @@ public class HexTileFogController : MonoBehaviour
     private HexTileData tileData;
     private GameObject propsContainer;
     private GameObject visualsContainer;
-    //private FogState currentState = FogState.Hidden;
-
-    // --- DEBUGGING ---
-    [Header("--- DEBUG ---")]
-    [SerializeField] private FogState currentState = FogState.Hidden;
+    private Renderer[] cachedRenderers = System.Array.Empty<Renderer>();
+    private FogState currentState = FogState.Hidden;
 
     private MaterialPropertyBlock propertyBlock;
     // URP uses _BaseColor, standard shaders use _Color
@@ -47,7 +44,8 @@ public class HexTileFogController : MonoBehaviour
             if (tileData.propsContainer != null) propsContainer = tileData.propsContainer.gameObject;
         }
 
-        if (propertyBlock == null) propertyBlock = new MaterialPropertyBlock();
+        propertyBlock ??= new MaterialPropertyBlock();
+        CacheRenderers();
     }
 
     public void InitializeFoW(bool enableFoW, HexTileData data)
@@ -55,9 +53,14 @@ public class HexTileFogController : MonoBehaviour
         isFogOfWarEnabled = enableFoW;
 
         tileData = data;
-        propsContainer = tileData.propsContainer.gameObject;
-        visualsContainer = tileData.visualsContainer.gameObject;
+        if (tileData != null)
+        {
+            if (tileData.propsContainer != null) propsContainer = tileData.propsContainer.gameObject;
+            if (tileData.visualsContainer != null) visualsContainer = tileData.visualsContainer.gameObject;
+        }
+
         propertyBlock ??= new MaterialPropertyBlock();
+        CacheRenderers();
 
         if (!isFogOfWarEnabled)
         {
@@ -70,7 +73,7 @@ public class HexTileFogController : MonoBehaviour
         }
         else
         {
-            tileData.isExplored = false;
+            if (tileData != null) tileData.isExplored = false;
         }
 
         // Apply custom fog material to the fog visual mesh if assigned
@@ -78,12 +81,29 @@ public class HexTileFogController : MonoBehaviour
         {
             if (fogVisualObject.TryGetComponent<Renderer>(out var fogRenderer))
             {
-                fogRenderer.material = fogMaterial;
+                fogRenderer.sharedMaterial = fogMaterial;
             }
         }
 
         // Default initial state
         SetFogState(FogState.Hidden);
+    }
+
+    private void CacheRenderers()
+    {
+        List<Renderer> renderersList = new();
+
+        if (visualsContainer != null)
+        {
+            renderersList.AddRange(visualsContainer.GetComponentsInChildren<Renderer>());
+        }
+
+        if (propsContainer != null)
+        {
+            renderersList.AddRange(propsContainer.GetComponentsInChildren<Renderer>());
+        }
+
+        cachedRenderers = renderersList.ToArray();
     }
 
     public void SetFogState(FogState newState)
@@ -135,21 +155,16 @@ public class HexTileFogController : MonoBehaviour
 
     private void ApplyShadowTint(bool isShadowed)
     {
-        if (visualsContainer == null) return;
+        if (cachedRenderers == null || cachedRenderers.Length == 0)
+        {
+            CacheRenderers();
+        }
 
         propertyBlock ??= new MaterialPropertyBlock();
 
-        List<Renderer> renderers = new();
-        renderers.AddRange(visualsContainer.GetComponentsInChildren<Renderer>());
-
-        if (propsContainer != null)
+        foreach (var rend in cachedRenderers)
         {
-            renderers.AddRange(propsContainer.GetComponentsInChildren<Renderer>());
-        }
-
-        foreach (var rend in renderers)
-        {
-            if (rend == null || rend.sharedMaterial == null) continue;
+            if (rend == null) continue;
 
             if (isShadowed)
             {
@@ -161,7 +176,7 @@ public class HexTileFogController : MonoBehaviour
                     rend.GetPropertyBlock(propertyBlock, i);
 
                     // Fetch the original color from the material
-                    Color originalColor = Color.white;
+                    Color originalColor = Color.magenta;
                     if (mat.HasProperty(BaseColorId))
                     {
                         originalColor = mat.GetColor(BaseColorId);
@@ -173,10 +188,8 @@ public class HexTileFogController : MonoBehaviour
 
                     // Multiply original color by the shadow tint
                     propertyBlock.SetColor(BaseColorId, originalColor * exploredShadowColor);
-
                     rend.SetPropertyBlock(propertyBlock, i);
                 }
-
             }
             else
             {
@@ -185,8 +198,6 @@ public class HexTileFogController : MonoBehaviour
                 {
                     rend.SetPropertyBlock(null, i);
                 }
-
-                rend.SetPropertyBlock(null);    // Clear global just in case
             }
         }
     }

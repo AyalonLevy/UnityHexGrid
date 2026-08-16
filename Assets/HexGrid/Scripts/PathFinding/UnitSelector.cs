@@ -13,6 +13,8 @@ public class UnitSelector : Selector
 
     protected override void HandleRaycastHit(RaycastHit hit)
     {
+        if (hit.collider == null) return;
+
         Unit hitUnit = hit.collider.GetComponentInParent<Unit>();
 
         if (hitUnit != null)
@@ -31,7 +33,8 @@ public class UnitSelector : Selector
 
     protected override void HandleRaycastMiss()
     {
-
+        // Intentionally left blank: Clicking empty space should not automatically deselect the unit.
+        // TODO: Decide what to do in this case
     }
 
     private void SelectUnit(Unit newUnit)

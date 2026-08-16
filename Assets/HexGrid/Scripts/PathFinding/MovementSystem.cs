@@ -116,17 +116,19 @@ public class MovementSystem : MonoBehaviour
             }
         }
         movementRange = new();
+        currentPath.Clear(); // Clears lingering path references
     }
 
     public void ShowRange(Unit unit)
     {
         CalculateRange(unit);
 
-        Vector3Int unitPos = gridManager.GetClosestHex(selectedUnit.transform.position);
+        // Utilize cached unit tile coordinate directly without secondary world-position lookups
+        Vector3Int unitCoord = unit.CurrentTile.tileCoordinates;
 
         foreach (Vector3Int hexPosition in movementRange.GetRangePositions())
         {
-            if (unitPos == hexPosition) continue;
+            if (unitCoord == hexPosition) continue;
 
             HexTileData tile = gridManager.GetTileAt(hexPosition);
             if (tile != null && !tile.IsObstacle())

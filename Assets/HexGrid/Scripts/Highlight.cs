@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class Highlight : MonoBehaviour
 {
+    [Header("Highlight Settings")]
     [Tooltip("Slight scale multiplier to prevent Z-fighting (flickering) over the original mesh.")]
     [SerializeField] private float scaleMultiplier = 1.02f;
 
@@ -9,11 +10,11 @@ public class Highlight : MonoBehaviour
     private MeshRenderer overlayRenderer;
 
     private Color validSpaceColor = Color.green;
-    private Color originalHighlightColor;
 
     public void InitializeHighlight(Transform targetContainer)
     {
-        if (targetContainer != null) targetContainer = transform;
+        // Fallback to transform only if null
+        if (targetContainer == null) targetContainer = transform;
 
         // Find the first <eshFilter inside the target container and copy its shape
         MeshFilter sourceMeshFilter = targetContainer.GetComponentInChildren<MeshFilter>();
@@ -33,7 +34,8 @@ public class Highlight : MonoBehaviour
 
         // Add components and assign the mesh and highlight material
         MeshFilter overlayMeshFilter = generatedOverlayObject.AddComponent<MeshFilter>();
-        MeshRenderer overlayRenderer = generatedOverlayObject.AddComponent<MeshRenderer>();
+
+        overlayRenderer = generatedOverlayObject.AddComponent<MeshRenderer>();
 
         overlayMeshFilter.sharedMesh = sourceMeshFilter.sharedMesh;
 
@@ -46,16 +48,22 @@ public class Highlight : MonoBehaviour
         if (generatedOverlayObject != null)
         {
             generatedOverlayObject.SetActive(state);
-            generatedOverlayObject.GetComponent<MeshRenderer>().material = highlightMat;
+
+            if (overlayRenderer != null && highlightMat != null)
+            {
+                // Use sharedMaterial to avoid material instance leaks
+                overlayRenderer.sharedMaterial = highlightMat;
+            }
         }
     }
 
+    // TODO: Check if it is even used
     internal void HighlightValidPath()
     {
         if (overlayRenderer != null && overlayRenderer.material != null)
         {
             // Change color to indicate the active path (e.g., Yellow/Gold)
-            overlayRenderer.material.SetColor("_HighlightColor", Color.yellow);
+            overlayRenderer.sharedMaterial.SetColor("_HighlightColor", Color.yellow);
             Debug.Log("All is Yellow!");
         }
     }
@@ -65,7 +73,7 @@ public class Highlight : MonoBehaviour
         if (overlayRenderer != null && overlayRenderer.material != null)
         {
             // Reset color back to the standard valid space highlight color
-            overlayRenderer.material.SetColor("_HighlightColor", validSpaceColor);
+            overlayRenderer.sharedMaterial.SetColor("_HighlightColor", validSpaceColor);
             Debug.Log("All is Green!");
         }
     }

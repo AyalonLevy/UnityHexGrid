@@ -57,8 +57,12 @@ public class PropDrawer : PropertyDrawer
         position = EditorGUI.PrefixLabel(position, label);
         int selectedIndex = EditorGUI.Popup(position, currentIndex, displayedOptions.ToArray());
 
-        // Update property reference if a new domain was selected
-        if (selectedIndex > 0 && selectedIndex - 1 < filteredProps.Count)
+        // Update property reference based on selection[cite: 21]
+        if (selectedIndex == 0)
+        {
+            property.objectReferenceValue = null; // Properly unassigns prop when "None" is selected
+        }
+        else if (selectedIndex > 0 && (selectedIndex - 1) < filteredProps.Count)
         {
             property.objectReferenceValue = filteredProps[selectedIndex - 1].propPrefab;
         }
@@ -70,7 +74,7 @@ public class PropDrawer : PropertyDrawer
         HexGridGenerator generator = Object.FindFirstObjectByType<HexGridGenerator>();
         if (generator != null)
         {
-            // Use SerializeObject to access provate/serialized database field safely
+            // Use SerializeObject to access private/serialized database field safely
             SerializedObject serializedGenerator = new(generator);
             SerializedProperty dbProp = serializedGenerator.FindProperty("gridDatabase");
             if (dbProp != null && dbProp.objectReferenceValue is HexGridDatabase db)

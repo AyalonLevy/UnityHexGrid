@@ -36,40 +36,52 @@ public class Unit : MonoBehaviour
 
     internal void Deselect()
     {
-        highlight.SetHighlight(false, highlightMaterial);
+        highlight?.SetHighlight(false, highlightMaterial);
     }
 
     public void Select()
     {
-        highlight.SetHighlight(true, highlightMaterial);
+        highlight?.SetHighlight(true, highlightMaterial);
     }
 
     internal void MoveThroughPath(List<Vector3> currentPath)
     {
-        pathPositions = new(currentPath);
+        if (currentPath == null || currentPath.Count == 0) return;
+
+        pathPositions.Clear();
+        foreach (var pos in currentPath)
+        {
+            pathPositions.Enqueue(pos);
+        }
+
         Vector3 firstTarget = pathPositions.Dequeue();
-        StartCoroutine(RotatopnCoroutine(firstTarget, rotationDuration));
+        StartCoroutine(RotationCoroutine(firstTarget, rotationDuration));
     }
 
-    private IEnumerator RotatopnCoroutine(Vector3 endPosition, float rotationDuration)
+    private IEnumerator RotationCoroutine(Vector3 endPosition, float rotationDuration)
     {
         Quaternion startRotation = transform.rotation;
         endPosition.y = transform.position.y;
         Vector3 direction = endPosition - transform.position;
-        Quaternion endRotation = Quaternion.LookRotation(direction, Vector3.up);
 
-        if (Mathf.Approximately(Mathf.Abs(Quaternion.Dot(startRotation, endRotation)), 1.0f) == false)
+        if (direction != Vector3.zero)
         {
-            float elapsedTime = 0;
-            while (elapsedTime < rotationDuration)
+            Quaternion endRotation = Quaternion.LookRotation(direction, Vector3.up);
+            
+            if (!Mathf.Approximately(Mathf.Abs(Quaternion.Dot(startRotation, endRotation)), 1.0f))
             {
-                elapsedTime += Time.deltaTime;
-                float lerpStep = elapsedTime / rotationDuration;
-                transform.rotation = Quaternion.Lerp(startRotation, endRotation, lerpStep);
-                yield return null;
+                float elapsedTime = 0;
+                while (elapsedTime < rotationDuration)
+                {
+                    elapsedTime += Time.deltaTime;
+                    float lerpStep = Mathf.Clamp01(elapsedTime / rotationDuration);
+                    transform.rotation = Quaternion.Lerp(startRotation, endRotation, lerpStep);
+                    yield return null;
+                }
+
+                transform.rotation = endRotation;
             }
 
-            transform.rotation = endRotation;
         }
 
         StartCoroutine(MovementCoroutine(endPosition));
@@ -84,7 +96,7 @@ public class Unit : MonoBehaviour
         while (elapsedTime < movementDuration)
         {
             elapsedTime += Time.deltaTime;
-            float lerpStep = elapsedTime / movementDuration;
+            float lerpStep = Mathf.Clamp01(elapsedTime / movementDuration);
             transform.position = Vector3.Lerp(startPosition, endPosition, lerpStep);
             yield return null;
         }
@@ -93,7 +105,7 @@ public class Unit : MonoBehaviour
 
         if (pathPositions.Count > 0)
         {
-            StartCoroutine(RotatopnCoroutine(pathPositions.Dequeue(), rotationDuration));
+            StartCoroutine(RotationCoroutine(pathPositions.Dequeue(), rotationDuration));
         }
         else
         {

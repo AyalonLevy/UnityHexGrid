@@ -2,6 +2,11 @@ using UnityEngine;
 
 public class HexGridMath
 {
+    // Pre-calculation for performance optimization
+    private const float Sqrt3Div3 = 0.57735026919f; // Equivalent to Mathf.Sqrt(3.0f) / 3.0f
+    private const float OneThird = 1.0f / 3.0f;
+    private const float TwoThirds = 2.0f / 3.0f;
+
     /// <summary>
     /// Translates a physical world position into an exact integer cube coordinate based on the hex radius.
     /// </summary>
@@ -9,8 +14,8 @@ public class HexGridMath
     {
         float safeRadius = hexRadius > 0.0f ? hexRadius : 1.0f;
 
-        float q = (Mathf.Sqrt(3.0f) / 3.0f * position.x - 1.0f / 3.0f * position.z) / hexRadius;
-        float r = (2.0f / 3.0f * position.z) / hexRadius;
+        float q = (Sqrt3Div3 * position.x - OneThird * position.z) / safeRadius;
+        float r = (TwoThirds * position.z) / safeRadius;
         float s = -q - r;
 
         return CubeRound(q, r, s);

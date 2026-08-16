@@ -5,6 +5,7 @@ using UnityEngine;
 public class HexGridSelector : Selector
 {
     private HexTileData currentlySelectedTile;
+    private MovementSystem movementSystem;
 
     // Public API Events for external tool integration
     public event Action<HexTileData> OnTileSelected;
@@ -16,19 +17,28 @@ public class HexGridSelector : Selector
     public HexTileData CurrentSelectedTile => currentlySelectedTile;
     public void SetSelectableState(bool canBeSelected) { isSelectable = canBeSelected; }
 
+    protected override void Awake()
+    {
+        base.Awake();
+        movementSystem = GetComponent<MovementSystem>();
+    }
+
     protected override void HandleRaycastHit(RaycastHit hit)
     {
+        if (hit.collider == null) return;
+
         HexTileData hitTile = hit.collider.GetComponentInParent<HexTileData>();
+
+        if (movementSystem == null) movementSystem = GetComponent<MovementSystem>();
 
         if (hitTile != null)
         {
             // 1. Check if pathfinding is active and this clicked tile is a highlighted movement target
-            if (TryGetComponent<MovementSystem>(out var movementSystem) &&
-                movementSystem.HasActiveUnit &&
-                movementSystem.IsHexInRange(hitTile.tileCoordinates))
+            if (movementSystem != null && movementSystem.HasActiveUnit && movementSystem.IsHexInRange(hitTile.tileCoordinates))
             {
                 // It is highlighted as a valid move destination! Send action and return.
                 movementSystem.ProcessMovementClick(hitTile);
+                OnTileClicked?.Invoke(hitTile);
                 return;
             }
 
@@ -47,7 +57,7 @@ public class HexGridSelector : Selector
         }
         else
         {
-            // Check if the tile is part of a possible path
+            // Check if the tile is part of a possible path when clicking a unit
             if (TryGetComponent<MovementSystem>(out var movementSystem) && movementSystem.HasActiveUnit)
             {
                 if (currentlySelectedTile != null && movementSystem.IsHexInRange(currentlySelectedTile.tileCoordinates))

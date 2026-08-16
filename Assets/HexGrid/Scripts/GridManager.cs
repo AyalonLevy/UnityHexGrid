@@ -10,20 +10,17 @@ public struct CubeTileMapping
 
 public class GridManager : MonoBehaviour
 {
-    // Data structure for serializing tile mappings for Unity scene saving. Populated by HexGridGenerator during grid generation.
     [Header("Data")]
     [Tooltip("Pre-populated by the HexGridGenerator for scene persistence.")]
     [SerializeField] private List<CubeTileMapping> serializedTiles = new();
 
-    // The radius of each hexagon in the grid, used for coordinate conversion. Automatically set by HexGridGenerator during generation.
     [Header("Grid Metrics")]
-    [SerializeField, Tooltip("Hexagon radius, stored automatically by the Generator for coordinate calculations.")]
-    private float hexRadius = 1.0f;
+    [Tooltip("Hexagon radius, stored automatically by the Generator for coordinate calculations.")]
+    [SerializeField] private float hexRadius = 1.0f;
 
-    // Runtime dictionary mapping cube coordinates to HexTileData objects for fast lookup. Initialized in Awake() and populated by serializedTiles data.
-    private Dictionary<Vector3Int, HexTileData> grid = new();
+    private readonly Dictionary<Vector3Int, HexTileData> grid = new();
 
-    public static List<Vector3Int> cubeDirections = new()
+    public static readonly List<Vector3Int> cubeDirections = new()
     {
         new Vector3Int(1, 0, -1),   // E
         new Vector3Int(0, 1, -1),   // NE
@@ -58,6 +55,9 @@ public class GridManager : MonoBehaviour
         serializedTiles = new(generatedTiles);
         hexRadius = radius;
 
+        // Ensure runtime dictionary updates immediately with injected data
+        InitializeDictionary();
+
 #if UNITY_EDITOR
         // Tell Unity this object's data changed so it saves the list to the scene file
         UnityEditor.EditorUtility.SetDirty(this);
@@ -66,12 +66,7 @@ public class GridManager : MonoBehaviour
 
     public HexTileData GetTileAt(Vector3Int coordinates)
     {
-        if (grid.TryGetValue(coordinates, out HexTileData tile))
-        {
-            return tile;
-        }
-
-        return null;
+        return grid.TryGetValue(coordinates, out HexTileData tile) ? tile : null;
     }
 
     public List<HexTileData> GetTileNeighbours(Vector3Int centerCoordinates)

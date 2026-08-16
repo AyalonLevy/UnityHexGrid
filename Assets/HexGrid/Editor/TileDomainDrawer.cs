@@ -63,7 +63,7 @@ public class TileDomainDrawer : PropertyDrawer
         HexGridGenerator generator = Object.FindFirstObjectByType<HexGridGenerator>();
         if (generator != null)
         {
-            // Use SerializeObject to access provate/serialized database field safely
+            // Use SerializedObject to access private/serialized database field safely
             SerializedObject serializedGenerator = new(generator);
             SerializedProperty dbProp = serializedGenerator.FindProperty("gridDatabase");
             if (dbProp != null && dbProp.objectReferenceValue is HexGridDatabase db)

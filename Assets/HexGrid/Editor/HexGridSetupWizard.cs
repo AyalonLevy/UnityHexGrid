@@ -11,14 +11,14 @@ public class HexGridSetupWizard : EditorWindow
     [Header("Database Settings")]
     [Tooltip("Name of the database asset that will be created.")]
     public string databaseAssetName = "HexGridDatabase";
-    [Tooltip("If empty, the wizard can automatically create a HexGridGenerator in your scene.")]
 
+    [Tooltip("If empty, the wizard can automatically create a HexGridGenerator in your scene.")]
     public HexGridGenerator targetGenerator;
     public bool createNewGenerator = true;
 
     private HexGridDatabase createdDatabase; // Keeps track if we already generated it
     private GameObject newGridContainer;
-    private string baseFolder = "Assets/HexGrid";
+    private readonly string baseFolder = "Assets/HexGrid";
 
 
     // This creates a menu item at the top of the Unity editor
@@ -250,8 +250,11 @@ public class HexGridSetupWizard : EditorWindow
 
             dbProp.objectReferenceValue = createdDatabase;
 
-            SerializedProperty gridContainerProp = serializeGenerator.FindProperty("gridContainer");
-            gridContainerProp.objectReferenceValue = newGridContainer.transform;
+            if (newGridContainer != null)
+            {
+                SerializedProperty gridContainerProp = serializeGenerator.FindProperty("gridContainer");
+                gridContainerProp.objectReferenceValue = newGridContainer.transform;
+            }
 
             serializeGenerator.ApplyModifiedProperties();
 

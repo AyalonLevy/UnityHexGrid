@@ -59,7 +59,6 @@ public class HexTileData : MonoBehaviour
     [HideInInspector] public bool isExplored = true;
     [HideInInspector] public Vector3Int tileCoordinates;
 
-
     private Highlight highlight;
 
     private void OnValidate()
@@ -69,7 +68,7 @@ public class HexTileData : MonoBehaviour
 #if UNITY_EDITOR
         SyncPropDropdown();
 
-        // 1. Check if Domain changed (Clear props as you decided)
+        // 1. Check if Domain changed (Clear props if required)
         if (database != null && currentDomain != previousDomain && previousDomain != null)
         {
             tileIndex = Mathf.Clamp(tileIndex, 0, database.hexGridTiles.Count - 1);
@@ -118,7 +117,7 @@ public class HexTileData : MonoBehaviour
     {
         highlight = GetComponent<Highlight>();
 
-        if (visualsContainer != null)
+        if (highlight != null)
         {
             Transform targetContainer = visualsContainer != null ? visualsContainer : transform;
             highlight.InitializeHighlight(targetContainer);
@@ -127,7 +126,7 @@ public class HexTileData : MonoBehaviour
 
     public void UpdatePropContainerHeight()
     {
-        if (propsContainer == null)
+        if (propsContainer != null)
         {
             propsContainer.localPosition = new Vector3(propsContainer.localPosition.x, tileHeight, propsContainer.localPosition.z);
         }
@@ -143,11 +142,17 @@ public class HexTileData : MonoBehaviour
 
     public void ClearTile()
     {
-        for (int i = visualsContainer.childCount - 1; i >= 0; i--)
-            Destroy(visualsContainer.GetChild(i).gameObject);
+        if (visualsContainer != null)
+        {
+            for (int i = visualsContainer.childCount - 1; i >= 0; i--)
+                Destroy(visualsContainer.GetChild(i).gameObject);
+        }
 
-        for (int i = propsContainer.childCount - 1; i >= 0; i--)
-            Destroy(propsContainer.GetChild(i).gameObject);
+        if (propsContainer != null)
+        {
+            for (int i = propsContainer.childCount - 1; i >= 0; i--)
+                Destroy(propsContainer.GetChild(i).gameObject);
+        }
 
         hasProp = false;
         propIndex = -1;
@@ -183,12 +188,12 @@ public class HexTileData : MonoBehaviour
 
     internal void ResetHighlight()
     {
-        highlight.ResetHighlight();
+        highlight?.ResetHighlight();
     }
 
     internal void HighlightPath()
     {
-        highlight.HighlightValidPath();
+        highlight?.HighlightValidPath();
     }
 
 #if UNITY_EDITOR
@@ -225,8 +230,11 @@ public class HexTileData : MonoBehaviour
             manualPropSelection = null;
             propIndex = -1;
 
-            for (int i = propsContainer.childCount - 1; i >= 0; i--)
-                DestroyImmediate(propsContainer.GetChild(i).gameObject);
+            if (propsContainer != null)
+            {
+                for (int i = propsContainer.childCount - 1; i >= 0; i--)
+                    DestroyImmediate(propsContainer.GetChild(i).gameObject);
+            }
         }
 
         if (newTile.tilePrefab != null)
@@ -334,7 +342,6 @@ public class HexTileData : MonoBehaviour
             if (hasProp && database != null && propIndex >= 0 && propIndex < database.props.Count)
             {
                 HexType propEffect = database.props[propIndex].terrainEffect;
-
                 hexType = propEffect == HexType.None ? HexType.Difficult : propEffect;
             }
             else

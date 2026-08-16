@@ -8,7 +8,9 @@ public class FogRevealer : MonoBehaviour
 
     private GridManager gridManager;
     private Vector3Int lastKnownCubeCoord = new(int.MinValue, int.MinValue, int.MinValue);
-    private List<HexTileData> currentlyVisibleTiles = new();
+
+    // Using HashSets for O(1) lookups and efficient set operations
+    private readonly HashSet<HexTileData> currentlyVisibleTiles = new();
 
     private void Start()
     {
@@ -16,7 +18,7 @@ public class FogRevealer : MonoBehaviour
         if (gridManager == null)
         {
             Debug.LogError("FogRevealer: No GridManager found in scene!", this);
-            return;
+            enabled = false; // Disable script if dependency is missing to save update cycles
         }
     }
 
@@ -35,33 +37,47 @@ public class FogRevealer : MonoBehaviour
 
     private void UpdateVision(Vector3Int centerCoord)
     {
+        // 1. Fetch newly visible tiles from the grid manager
+        List<HexTileData> fetchedTiles = gridManager.GetTilesInRadius(centerCoord, visionRadius);
+        HashSet<HexTileData> newlyVisibleTiles = new(fetchedTiles);
+
+        // 2. Identify tiles that are no longer visible (in current but not in new)
         foreach (var tile in currentlyVisibleTiles)
         {
-            if (tile != null)
+            if (tile != null && !newlyVisibleTiles.Contains(tile))
             {
-                if (tile.TryGetComponent<HexTileFogController>(out var fogController))
-                {
-                    if (fogController.GetCurrentState() == HexTileFogController.FogState.Visible)
-                    {
-                        fogController.SetFogState(HexTileFogController.FogState.Explored);
-                    }
-                }
+                SetTileFogState(tile, HexTileFogController.FogState.Explored);
             }
         }
 
+        // 3. Identify newly entered tiles (in new but not in current)
+        foreach (var tile in newlyVisibleTiles)
+        {
+            if (tile != null && !currentlyVisibleTiles.Contains(tile))
+            {
+                SetTileFogState(tile, HexTileFogController.FogState.Visible);
+            }
+        }
+
+        // 4. Update our active tracking set
         currentlyVisibleTiles.Clear();
-
-        List<HexTileData> newlyVisibleTiles = gridManager.GetTilesInRadius(centerCoord, visionRadius);
-
         foreach (var tile in newlyVisibleTiles)
         {
             if (tile != null)
             {
-                if (tile.TryGetComponent<HexTileFogController>(out var fogController))
-                {
-                    fogController.SetFogState(HexTileFogController.FogState.Visible);
-                    currentlyVisibleTiles.Add(tile);
-                }
+                currentlyVisibleTiles.Add(tile);
+            }
+        }
+    }
+
+    private void SetTileFogState(HexTileData tile, HexTileFogController.FogState targetState)
+    {
+        if (tile.TryGetComponent<HexTileFogController>(out var fogController))
+        {
+            // Only update if it's not already in the target state to avoid redundant calls
+            if (fogController.GetCurrentState() != targetState)
+            {
+                fogController.SetFogState(targetState);
             }
         }
     }

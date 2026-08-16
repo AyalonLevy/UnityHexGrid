@@ -2,11 +2,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 
-
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-
 
 [System.Serializable]
 public struct GridData
@@ -35,7 +33,7 @@ public enum GridShape
 
 public class HexGridGenerator : MonoBehaviour
 {
-    private readonly float FOG_GAP = 0.05f;
+    private const float FogGap = 0.05f;
 
     [Header("Database Reference")]
     [Tooltip("Assign your external HexGridDatabase asset here.")]
@@ -54,7 +52,7 @@ public class HexGridGenerator : MonoBehaviour
     [Tooltip("The length of the hexagon edge")]
     [SerializeField] private float tileEdgeSize = 1;
     [Tooltip("The height to place the props on the hexagon tile")]
-    [SerializeField] private float gapBetweenTiles = 0; // Add an option to add a gap between the tiles
+    [SerializeField] private float gapBetweenTiles = 0;
     [SerializeField] private Transform gridContainer;
 
     [Tooltip("Select grid shape")]
@@ -73,10 +71,10 @@ public class HexGridGenerator : MonoBehaviour
 
     [SerializeField] private string fileName = "GridData";
 
-    private List<CubeTileMapping> currentCubeMapping = new();
+    private readonly List<CubeTileMapping> currentCubeMapping = new();
 
-    private readonly float hexagonAngleDeg = 60.0f;
-    private readonly int hexagonSides = 6;
+    private const float HexagonAngleDeg = 60.0f;
+    private const int HexagonSides = 6;
 
 
     public void GenerateGrid()
@@ -148,51 +146,37 @@ public class HexGridGenerator : MonoBehaviour
             }
         }
 
-        // Attach the GridManager and inject the mapped data, attach the HexGridSelector
-        if (enableGridSelection && gridContainer != null)
+        // Setup for Grid Manager
+        if (!gridContainer.TryGetComponent<GridManager>(out var manager))
         {
-            if (!gridContainer.TryGetComponent<GridManager>(out var manager))
-            {
-                manager = gridContainer.gameObject.AddComponent<GridManager>();
-            }
-
-            manager.InjectGridData(currentCubeMapping, tileEdgeSize);
-
-            if (!gridContainer.TryGetComponent<HexGridSelector>(out var gridSelector))
-            {
-                gridSelector = gridContainer.gameObject.AddComponent<HexGridSelector>();
-            }
-            gridSelector.SetSelectableState(true);
+            manager = gridContainer.gameObject.AddComponent<GridManager>();
         }
 
-        // Attach the UnitSelector and MovementSystem
-        if (enablePathFinder && gridContainer != null)
+        manager.InjectGridData(currentCubeMapping, tileEdgeSize);
+
+        // Consolidated Component Setup for Selectors, and Pathfinders
+        if ((enableGridSelection || enablePathFinder) && gridContainer != null)
         {
-            if (!gridContainer.TryGetComponent<GridManager>(out var manager))
-            {
-                manager = gridContainer.gameObject.AddComponent<GridManager>();
-            }
-
-            manager.InjectGridData(currentCubeMapping, tileEdgeSize);
-
-            if (!gridContainer.TryGetComponent<UnitSelector>(out var unitSelector))
-            {
-                unitSelector = gridContainer.gameObject.AddComponent<UnitSelector>();
-            }
-
             if (!gridContainer.TryGetComponent<HexGridSelector>(out var gridSelector))
             {
                 gridSelector = gridContainer.gameObject.AddComponent<HexGridSelector>();
             }
-
             gridSelector.SetSelectableState(enableGridSelection);
 
-            if (!gridContainer.TryGetComponent<MovementSystem>(out var ms))
+            if (enablePathFinder)
             {
-                ms = gridContainer.gameObject.AddComponent<MovementSystem>();
-            }
+                if (!gridContainer.TryGetComponent<UnitSelector>(out var unitSelector))
+                {
+                    unitSelector = gridContainer.gameObject.AddComponent<UnitSelector>();
+                }
 
-            ms.InjectComponents(manager, unitSelector, gridSelector);
+                if (!gridContainer.TryGetComponent<MovementSystem>(out var ms))
+                {
+                    ms = gridContainer.gameObject.AddComponent<MovementSystem>();
+                }
+
+                ms.InjectComponents(manager, unitSelector, gridSelector);
+            }
         }
     }
 
@@ -213,39 +197,20 @@ public class HexGridGenerator : MonoBehaviour
 #endif
         }
 
-        if (gridContainer.TryGetComponent<MovementSystem>(out var movementSys))
-        {
-#if UNITY_EDITOR
-            Undo.DestroyObjectImmediate(movementSys);
-#else
-        Destroy(movementSys);
-#endif
-        }
+        RemoveComponentIfExists<MovementSystem>();
+        RemoveComponentIfExists<UnitSelector>();
+        RemoveComponentIfExists<HexGridSelector>();
+        RemoveComponentIfExists<GridManager>();
+    }
 
-        if (gridContainer.TryGetComponent<UnitSelector>(out var unitSel))
+    private void RemoveComponentIfExists<T>() where T : Component
+    {
+        if (gridContainer.TryGetComponent<T>(out var component))
         {
 #if UNITY_EDITOR
-            Undo.DestroyObjectImmediate(unitSel);
+            Undo.DestroyObjectImmediate(component);
 #else
-        Destroy(unitSel);
-#endif
-        }
-
-        if (gridContainer.TryGetComponent<HexGridSelector>(out var hexSel))
-        {
-#if UNITY_EDITOR
-            Undo.DestroyObjectImmediate(hexSel);
-#else
-        Destroy(hexSel);
-#endif
-        }
-
-        if (gridContainer.TryGetComponent<GridManager>(out var gridMgr))
-        {
-#if UNITY_EDITOR
-            Undo.DestroyObjectImmediate(gridMgr);
-#else
-        Destroy(gridMgr);
+            Destroy(component);
 #endif
         }
     }
@@ -330,6 +295,8 @@ public class HexGridGenerator : MonoBehaviour
 
     private HexGridDatabase.TileData GetRandomWeightedTile(List<HexGridDatabase.TileData> tiles)
     {
+        if (tiles == null || tiles.Count == 0) return default;
+
         float totalWeight = 0.0f;
         foreach (var tile in tiles)
         {
@@ -337,7 +304,7 @@ public class HexGridGenerator : MonoBehaviour
         }
 
         // The first entry is the default value
-        if (totalWeight < 0.0f) return gridDatabase.hexGridTiles[0];
+        if (totalWeight < 0.0f) return tiles[0];
 
         float randomValue = Random.Range(0, totalWeight);
         float currentSum = 0.0f;
@@ -356,6 +323,8 @@ public class HexGridGenerator : MonoBehaviour
 
     private GameObject GetRandomWeightedProp(List<HexGridDatabase.PropData> props)
     {
+        if (props == null || props.Count == 0) return null;
+
         float totalWeight = 0.0f;
         foreach (var prop in props)
         {
@@ -363,7 +332,8 @@ public class HexGridGenerator : MonoBehaviour
         }
 
         // The first entry is the default value
-        if (totalWeight < 0.0f) return gridDatabase.props[0].propPrefab;
+        if (totalWeight < 0.0f) return props[0].propPrefab;
+
         float randomValue = Random.Range(0, totalWeight);
         float currentSum = 0.0f;
 
@@ -387,16 +357,18 @@ public class HexGridGenerator : MonoBehaviour
         GameObject tileObj = Instantiate(baseHexTilePrefab, position, Quaternion.identity, gridContainer);
         HexTileData tileData = tileObj.GetComponent<HexTileData>();
 
-        currentCubeMapping.Add(new()
+        CubeTileMapping mapping = new()
         {
             tile = tileData,
             cubeCoordinates = HexGridMath.WorldToCubeCoordinates(position, tileEdgeSize + gapBetweenTiles),
-        });
+        };
 
-        tileData.UpdateTileCoordinates(currentCubeMapping[currentCubeMapping.Count - 1].cubeCoordinates);
+        currentCubeMapping.Add(mapping);
+        tileData.UpdateTileCoordinates(mapping.cubeCoordinates);
 
-        tileData.database = this.gridDatabase;
-        tileData.InitializeData(this.gridDatabase, loadedData != null ? loadedData.Value.tileIndex : gridDatabase.hexGridTiles.IndexOf(tile), tile.domain);
+        tileData.database = gridDatabase;
+        int tileIndex = loadedData != null ? loadedData.Value.tileIndex : gridDatabase.hexGridTiles.IndexOf(tile);
+        tileData.InitializeData(gridDatabase, tileIndex, tile.domain);
 
         // Set the base data
         tileData.currentDomain = tile.domain;
@@ -468,12 +440,11 @@ public class HexGridGenerator : MonoBehaviour
             // Create a dedicated child for the Fog Volume
             GameObject fogObj = new GameObject("Fog");
             fogObj.transform.SetParent(tileObj.transform, false);
-            fogObj.transform.localPosition = new Vector3(0.0f, tileData.tileHeight + FOG_GAP, 0.0f);
+            fogObj.transform.localPosition = new Vector3(0.0f, tileData.tileHeight + FogGap, 0.0f);
 
             MeshFilter fogMf = fogObj.AddComponent<MeshFilter>();
             fogObj.AddComponent<MeshRenderer>(); // Material is handled by the controller
 
-            float fogThickness = tileData.tileHeight > 0.0f ? tileData.tileHeight : 1.0f;
             fogMf.sharedMesh = HexVolumeMeshGenerator.CreateHexPlaneMesh(tileEdgeSize);
 
             // Assign the new object to the controller and initialize
@@ -485,7 +456,11 @@ public class HexGridGenerator : MonoBehaviour
             // Clean up the component if FOW is disabled so it doesn't waste overhead
             if (tileObj.TryGetComponent<HexTileFogController>(out var fogController))
             {
+#if UNITY_EDITOR
                 DestroyImmediate(fogController);
+#else
+                Destroy(fogController);
+#endif
             }
         }
 
@@ -507,18 +482,12 @@ public class HexGridGenerator : MonoBehaviour
     private Vector3 GetTilePositionForHorizontalGrid(int xPos, int yPos)
     {
         // Calculates the tile position in world coordinates based on the grid position
-        float offset = (tileEdgeSize + gapBetweenTiles) * Mathf.Sin(Mathf.Deg2Rad * hexagonAngleDeg);
+        float offset = (tileEdgeSize + gapBetweenTiles) * Mathf.Sin(Mathf.Deg2Rad * HexagonAngleDeg);
         float xShift = xPos * 2.0f * offset;
-        float yShift = yPos * (tileEdgeSize + gapBetweenTiles) * (Mathf.Cos(Mathf.Deg2Rad * hexagonAngleDeg) + 1);
+        float yShift = yPos * (tileEdgeSize + gapBetweenTiles) * (Mathf.Cos(Mathf.Deg2Rad * HexagonAngleDeg) + 1);
 
-        if (yPos % 2 == 0)
-        {
-            return new Vector3(xShift, 0, yShift);  // 2 is for twice the distance (from each hex tile)
-        }
-        else
-        {
-            return new Vector3(xShift + offset, 0, yShift);
-        }
+        // 2 is for twice the distance (from each hex tile)
+        return yPos % 2 == 0 ? new Vector3(xShift, 0, yShift) : new Vector3(xShift + offset, 0, yShift);
     }
 
     private List<Vector3> GetHexagonCornersPosition(int ringNum)
@@ -526,10 +495,10 @@ public class HexGridGenerator : MonoBehaviour
         List<Vector3> cornerPositions = new();
 
         // Generate layers based on the radius. There are 6 * (r - 1) tiles
-        for (int hexTileNum = 0; hexTileNum < hexagonSides * ringNum; hexTileNum += ringNum)
+        for (int hexTileNum = 0; hexTileNum < HexagonSides * ringNum; hexTileNum += ringNum)
         {
-            float theta = hexTileNum * 2 * Mathf.PI / (hexagonSides * ringNum);
-            float radius = (tileEdgeSize + gapBetweenTiles) * Mathf.Sin(Mathf.Deg2Rad * hexagonAngleDeg);
+            float theta = hexTileNum * 2 * Mathf.PI / (HexagonSides * ringNum);
+            float radius = (tileEdgeSize + gapBetweenTiles) * Mathf.Sin(Mathf.Deg2Rad * HexagonAngleDeg);
             Vector3 tilePos = new(ringNum * 2 * radius * Mathf.Cos(theta), 0, ringNum * 2 * radius * Mathf.Sin(theta));
 
             cornerPositions.Add(tilePos);
@@ -555,10 +524,9 @@ public class HexGridGenerator : MonoBehaviour
                 {
                     // Some vector math. Takes the 2 adjecant corners and add the fraction of the distance between them to the first point
                     Vector3 p0 = cornerPositions[idx];
-                    Vector3 p1 = cornerPositions[idx + 1 >= hexagonSides ? idx + 1 - hexagonSides : idx + 1];
+                    Vector3 p1 = cornerPositions[idx + 1 >= HexagonSides ? idx + 1 - HexagonSides : idx + 1];
 
-                    float frac = (float)i / (float)ringNum;
-                    Vector3 absDiff = new(Mathf.Abs(p1.x - p0.x), Mathf.Abs(p1.y - p0.y), Mathf.Abs(p1.z - p0.z));
+                    float frac = (float)i / ringNum;
 
                     positions.Add(p0 + (p1 - p0) * frac);
                 }
@@ -620,6 +588,8 @@ public class HexGridGenerator : MonoBehaviour
 
     private GameObject GetPropToSpawn(TileDomain tileDomain)
     {
+        if (gridDatabase == null || gridDatabase.props == null) return null;
+
         // Filter all the props based on the domain
         List<HexGridDatabase.PropData> filteredProps = gridDatabase.props.FindAll(p => p.domains != null && p.domains.Contains(tileDomain));
 

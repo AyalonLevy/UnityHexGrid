@@ -9,7 +9,9 @@ public class GridGeneratorEditor : Editor
     private SerializedProperty gridSizeProp;
     private SerializedProperty gridRadiusProp;
     private SerializedProperty gridDataFileProp;
-    private SerializedProperty addProps;
+    private SerializedProperty addPropsProp;
+    private SerializedProperty coveragePercentageProp;
+    private SerializedProperty scaleRangeProp;
     private SerializedProperty fileNameProps;
 
     private void OnEnable()
@@ -19,7 +21,9 @@ public class GridGeneratorEditor : Editor
         gridSizeProp = serializedObject.FindProperty("gridSize");
         gridRadiusProp = serializedObject.FindProperty("gridRadius");
         gridDataFileProp = serializedObject.FindProperty("gridDataFile");
-        addProps = serializedObject.FindProperty("addProps");
+        addPropsProp = serializedObject.FindProperty("addProps");
+        coveragePercentageProp = serializedObject.FindProperty("coveragePercentage");
+        scaleRangeProp = serializedObject.FindProperty("scaleRange");
         fileNameProps = serializedObject.FindProperty("fileName");
     }
 
@@ -36,7 +40,7 @@ public class GridGeneratorEditor : Editor
 
         EditorGUILayout.Space();
 
-        // Check the current enum value (0 = Rectangle, 1 = Hexagonal)
+        // Check the current enum value
         GridShape selectedShape = (GridShape)gridShapeProp.enumValueIndex;
 
         if (selectedShape == GridShape.Rectangle)
@@ -58,9 +62,9 @@ public class GridGeneratorEditor : Editor
         EditorGUILayout.Space();
 
         EditorGUILayout.LabelField("Props Parameters", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(addProps);
+        EditorGUILayout.PropertyField(addPropsProp);
 
-        if (addProps.boolValue)
+        if (addPropsProp.boolValue)
         {
             EditorGUILayout.PropertyField(serializedObject.FindProperty("coveragePercentage"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("scaleRange"));
@@ -71,7 +75,7 @@ public class GridGeneratorEditor : Editor
 
         EditorGUILayout.Space(15);
 
-        // Reference to our target script component
+        // Reference to target script component
         HexGridGenerator generator = (HexGridGenerator)target;
 
         // Draw Generate, Clear Save and buttons in the Inspector
@@ -96,6 +100,7 @@ public class GridGeneratorEditor : Editor
 
         EditorGUILayout.Space(15);
 
+        // Apply any changes made in the inspector to the target object
         serializedObject.ApplyModifiedProperties();
 
         if (GUILayout.Button("Save Grid to File", GUILayout.Height(35)))

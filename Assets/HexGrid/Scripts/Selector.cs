@@ -15,7 +15,7 @@ public abstract class Selector : MonoBehaviour
     [Header("Dependencies")]
     [SerializeField] private Camera mainCamera;
 
-    private void Awake()
+    protected virtual void Awake()
     {
         if (mainCamera == null)
         {
@@ -65,7 +65,7 @@ public abstract class Selector : MonoBehaviour
                 isPressed = true;
                 pointerPos = Mouse.current.position.ReadValue();
             }
-            // Checl Touch / Generic Pointer (Mobile support)
+            // Check Touch / Generic Pointer (Mobile support)
             else if (Pointer.current != null && Pointer.current.press.wasPressedThisFrame)
             {
                 isPressed = true;

@@ -2,11 +2,11 @@ using UnityEngine;
 
 public class HexVolumeMeshGenerator
 {
-    private const int HEXAGON_SIDES = 6;
-    private const float DEGREES_PER_SIDE = 60.0f;
-    private const float POINTY_TOP_OFFSET = 30.0f;
-    private const float UV_CENTER_OFFSET = 0.5f;
-    private const float UV_SCALE = 0.5f;
+    private const int HexagonSides = 6;
+    private const float DegreesPerSide = 60.0f;
+    private const float PointyTopOffset = 30.0f;
+    private const float UvCenterOffset = 0.5f;
+    private const float UvScale = 0.5f;
 
     /// <summary>
     /// Generates a flat 2D Hexagonal Plane mesh facing upwards.
@@ -19,38 +19,44 @@ public class HexVolumeMeshGenerator
         };
 
         int totalVertices = 7; // 1 center + 6 outer
-        int totalTriangles = HEXAGON_SIDES * 3; // 18 indices
+        int totalTriangles = HexagonSides * 3; // 18 indices
 
         Vector3[] vertices = new Vector3[totalVertices];
         Vector2[] uv = new Vector2[totalVertices];
         int[] triangles = new int[totalTriangles];
 
-        float angleOffset = POINTY_TOP_OFFSET;
         int vIndex = 0;
         int tIndex = 0;
 
         // --- CENTER VERTEX ---
         vertices[vIndex] = Vector3.zero;
-        uv[vIndex] = new Vector2(UV_CENTER_OFFSET, UV_CENTER_OFFSET);
+        uv[vIndex] = new Vector2(UvCenterOffset, UvCenterOffset);
         int centerIndex = vIndex++;
 
         // --- PERIMETER VERTICES ---
-        int[] perimeterIndices = new int[HEXAGON_SIDES];
-        for (int i = 0; i < HEXAGON_SIDES; i++)
+        int[] perimeterIndices = new int[HexagonSides];
+        float degToRad = Mathf.Deg2Rad;
+        float angleOffsetRad = PointyTopOffset * degToRad;
+        float sideStepRad = DegreesPerSide * degToRad;
+
+        for (int i = 0; i < HexagonSides; i++)
         {
-            float rad = Mathf.Deg2Rad * (angleOffset + i * DEGREES_PER_SIDE);
-            float x = outerRadius * Mathf.Cos(rad);
-            float z = outerRadius * Mathf.Sin(rad);
+            float rad = angleOffsetRad + (i * sideStepRad);
+            float cosRad = Mathf.Cos(rad);
+            float sinRad = Mathf.Sin(rad);
+
+            float x = outerRadius * cosRad;
+            float z = outerRadius * sinRad;
 
             vertices[vIndex] = new Vector3(x, 0.0f, z);
-            uv[vIndex] = new Vector2((Mathf.Cos(rad) + 1.0f) * UV_SCALE, (Mathf.Sin(rad) + 1.0f) * UV_SCALE);
+            uv[vIndex] = new Vector2((cosRad + 1.0f) * UvScale, (sinRad + 1.0f) * UvScale);
             perimeterIndices[i] = vIndex++;
         }
 
         // --- TRIANGLES ---
-        for (int i = 0; i < HEXAGON_SIDES; i++)
+        for (int i = 0; i < HexagonSides; i++)
         {
-            int next = (i + 1) % HEXAGON_SIDES;
+            int next = (i + 1) % HexagonSides;
 
             // Winding order set to ensure normals face UP in Unity
             triangles[tIndex++] = centerIndex;

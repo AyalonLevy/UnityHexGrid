@@ -8,7 +8,7 @@ public struct BFSResult
 
     public List<Vector3Int> GetPathTo(Vector3Int destination)
     {
-        if (visitedNodesDict.ContainsKey(destination) == false)
+        if (visitedNodesDict == null || !visitedNodesDict.ContainsKey(destination))
             return new List<Vector3Int>();
 
         return GraphSearch.GeneratePathBFS(destination, visitedNodesDict);
@@ -34,8 +34,8 @@ public class GraphSearch
         Queue<Vector3Int> nodesToVisitQueue = new();
 
         nodesToVisitQueue.Enqueue(startPoint);
-        costSoFar.Add(startPoint, 0);
-        visitedNodes.Add(startPoint, null);
+        costSoFar[startPoint] = 0;
+        visitedNodes[startPoint] = null;
 
         while (nodesToVisitQueue.Count > 0)
         {
@@ -43,15 +43,12 @@ public class GraphSearch
 
             foreach (HexTileData neighbour in gridManager.GetTileNeighbours(currentNode))
             {
-                Vector3Int neighbourPosition = neighbour.tileCoordinates;
-                HexTileData neighbourTile = gridManager.GetTileAt(neighbourPosition);
-
-                if (neighbourTile == null || neighbourTile.IsObstacle() || !neighbourTile.isExplored)
+                if (neighbour == null || neighbour.IsObstacle() || !neighbour.isExplored)
                     continue;
 
-                int nodeCost = neighbourTile.GetCost();
+                Vector3Int neighbourPosition = neighbour.tileCoordinates;
                 int currentCost = costSoFar[currentNode];
-                int newCost = currentCost + nodeCost;
+                int newCost = currentCost + neighbour.GetCost();
 
                 if (newCost <= movementPoints)
                 {
@@ -61,7 +58,7 @@ public class GraphSearch
                         costSoFar[neighbourPosition] = newCost;
                         nodesToVisitQueue.Enqueue(neighbourPosition);
                     }
-                    else if (costSoFar[neighbourPosition] > newCost)    // We found a "cheaper" way to reach this node
+                    else if (costSoFar[neighbourPosition] > newCost)    // Found a cheaper path to this node
                     {
                         costSoFar[neighbourPosition] = newCost;
                         visitedNodes[neighbourPosition] = currentNode;
@@ -75,18 +72,16 @@ public class GraphSearch
 
     public static List<Vector3Int> GeneratePathBFS(Vector3Int current, Dictionary<Vector3Int, Vector3Int?> visitedNodesDict)
     {
-        List<Vector3Int> path = new()
-        {
-            current
-        };
+        List<Vector3Int> path = new();
 
-        while (visitedNodesDict[current] != null)
+        // Trace backward from destination to the start point, excluding the start node itself
+        while (visitedNodesDict.ContainsKey(current) && visitedNodesDict[current] != null)
         {
-            path.Add(visitedNodesDict[current].Value);
+            path.Add(current);
             current = visitedNodesDict[current].Value;
         }
 
         path.Reverse();
-        return path.Skip(1).ToList();
+        return path;
     }
 }
