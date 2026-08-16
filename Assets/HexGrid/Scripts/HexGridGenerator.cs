@@ -158,10 +158,11 @@ public class HexGridGenerator : MonoBehaviour
 
             manager.InjectGridData(currentCubeMapping, tileEdgeSize);
 
-            if (!gridContainer.TryGetComponent<HexGridSelector>(out _))
+            if (!gridContainer.TryGetComponent<HexGridSelector>(out var gridSelector))
             {
-                gridContainer.gameObject.AddComponent<HexGridSelector>();
+                gridSelector = gridContainer.gameObject.AddComponent<HexGridSelector>();
             }
+            gridSelector.SetSelectableState(true);
         }
 
         // Attach the UnitSelector and MovementSystem
@@ -181,8 +182,10 @@ public class HexGridGenerator : MonoBehaviour
 
             if (!gridContainer.TryGetComponent<HexGridSelector>(out var gridSelector))
             {
-                gridContainer.gameObject.AddComponent<HexGridSelector>();
+                gridSelector = gridContainer.gameObject.AddComponent<HexGridSelector>();
             }
+
+            gridSelector.SetSelectableState(enableGridSelection);
 
             if (!gridContainer.TryGetComponent<MovementSystem>(out var ms))
             {
@@ -207,6 +210,42 @@ public class HexGridGenerator : MonoBehaviour
             Undo.DestroyObjectImmediate(child);
 #else
             Destroy(child);
+#endif
+        }
+
+        if (gridContainer.TryGetComponent<MovementSystem>(out var movementSys))
+        {
+#if UNITY_EDITOR
+            Undo.DestroyObjectImmediate(movementSys);
+#else
+        Destroy(movementSys);
+#endif
+        }
+
+        if (gridContainer.TryGetComponent<UnitSelector>(out var unitSel))
+        {
+#if UNITY_EDITOR
+            Undo.DestroyObjectImmediate(unitSel);
+#else
+        Destroy(unitSel);
+#endif
+        }
+
+        if (gridContainer.TryGetComponent<HexGridSelector>(out var hexSel))
+        {
+#if UNITY_EDITOR
+            Undo.DestroyObjectImmediate(hexSel);
+#else
+        Destroy(hexSel);
+#endif
+        }
+
+        if (gridContainer.TryGetComponent<GridManager>(out var gridMgr))
+        {
+#if UNITY_EDITOR
+            Undo.DestroyObjectImmediate(gridMgr);
+#else
+        Destroy(gridMgr);
 #endif
         }
     }
@@ -369,7 +408,7 @@ public class HexGridGenerator : MonoBehaviour
         visualMesh.transform.localPosition = Vector3.zero;
 
         // Add collider to the mesh for selection and path finding
-        if (enableGridSelection)
+        if (enableGridSelection || enablePathFinder)
         {
             MeshCollider meshCollider = visualMesh.AddComponent<MeshCollider>();
             meshCollider.convex = true;
@@ -454,8 +493,6 @@ public class HexGridGenerator : MonoBehaviour
         if (enablePathFinder)
         {
             tileData.EvaluateHexType();
-
-
         }
 
 #if UNITY_EDITOR

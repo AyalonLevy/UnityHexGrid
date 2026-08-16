@@ -3,8 +3,8 @@ using UnityEngine;
 
 public class Highlight : MonoBehaviour
 {
-    [Tooltip("The unlit transparent material used for the highlight glow.")]
-    [SerializeField] private Material highlightMaterial;
+    //[Tooltip("The unlit transparent material used for the highlight glow.")]
+    //[SerializeField] private Material highlightMaterial;
 
     [Tooltip("Slight scale multiplier to prevent Z-fighting (flickering) over the original mesh.")]
     [SerializeField] private float scaleMultiplier = 1.02f;
@@ -15,15 +15,15 @@ public class Highlight : MonoBehaviour
     private Color validSpaceColor = Color.green;
     private Color originalHighlightColor;
 
-    private void Awake()
-    {
-        if (highlightMaterial != null)
-        {
-            originalHighlightColor = highlightMaterial.GetColor("_HighlightColor");
-        }
-    }
+    //private void Awake()
+    //{
+    //    if (highlightMaterial != null)
+    //    {
+    //        originalHighlightColor = highlightMaterial.GetColor("_HighlightColor");
+    //    }
+    //}
 
-    public void Initialize(Transform targetContainer)
+    public void InitializeHighlight(Transform targetContainer)
     {
         if (targetContainer != null) targetContainer = transform;
 
@@ -49,25 +49,26 @@ public class Highlight : MonoBehaviour
 
         overlayMeshFilter.sharedMesh = sourceMeshFilter.sharedMesh;
 
-        if (highlightMaterial != null)
-        {
-            // Create a safe instance of the material so it doesn't leak shared asset modifications
-            overlayRenderer.sharedMaterial = new(highlightMaterial);
-        }
-        else
-        {
-            Debug.LogWarning("Highlight: No highlight material assigned!", this);
-        }
+        //if (highlightMaterial != null)
+        //{
+        //    // Create a safe instance of the material so it doesn't leak shared asset modifications
+        //    overlayRenderer.sharedMaterial = new(highlightMaterial);
+        //}
+        //else
+        //{
+        //    Debug.LogWarning("Highlight: No highlight material assigned!", this);
+        //}
 
         // Start hidden
         generatedOverlayObject.SetActive(false);
     }
 
-    public void SetHighlight(bool state)
+    public void SetHighlight(bool state, Material highlightMat)
     {
         if (generatedOverlayObject != null)
         {
             generatedOverlayObject.SetActive(state);
+            generatedOverlayObject.GetComponent<MeshRenderer>().material = highlightMat;
         }
     }
 
@@ -77,6 +78,7 @@ public class Highlight : MonoBehaviour
         {
             // Change color to indicate the active path (e.g., Yellow/Gold)
             overlayRenderer.material.SetColor("_HighlightColor", Color.yellow);
+            Debug.Log("All is Yellow!");
         }
     }
 
@@ -86,6 +88,7 @@ public class Highlight : MonoBehaviour
         {
             // Reset color back to the standard valid space highlight color
             overlayRenderer.material.SetColor("_HighlightColor", validSpaceColor);
+            Debug.Log("All is Green!");
         }
     }
 }

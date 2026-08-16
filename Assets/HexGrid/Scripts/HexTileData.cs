@@ -30,7 +30,7 @@ public class HexTileData : MonoBehaviour
     [SerializeField, HideInInspector] private TileDomain previousDomain;
     public HexType hexType;
 
-    [Header("PropData")]
+    [Header("Prop Data")]
     [HideInInspector] public bool hasProp;
 
     [PropDropdown]
@@ -46,12 +46,19 @@ public class HexTileData : MonoBehaviour
     [Header("Settings")]
     public float tileHeight = 0.1f;
 
+    [Header("Highlight Settings")]
+    [Tooltip("The unlit transparent material used for the highlight glow.")]
+    [SerializeField] private Material highlightMaterial;
+    [Tooltip("The unlit transparent material used for the path highlight glow.")]
+    [SerializeField] private Material pathMaterial;
+
     [Header("Hierarchy References")]
     public Transform visualsContainer;
     public Transform propsContainer;
 
     [HideInInspector] public bool isExplored = true;
     [HideInInspector] public Vector3Int tileCoordinates;
+
 
     private Highlight highlight;
 
@@ -114,7 +121,7 @@ public class HexTileData : MonoBehaviour
         if (visualsContainer != null)
         {
             Transform targetContainer = visualsContainer != null ? visualsContainer : transform;
-            highlight.Initialize(targetContainer);
+            highlight.InitializeHighlight(targetContainer);
         }
     }
 
@@ -164,14 +171,14 @@ public class HexTileData : MonoBehaviour
         return this.hexType == HexType.Obstacle;
     }
 
-    public void EnableHighlight()
+    public void EnableHighlight(bool isPath)
     {
-        if (highlight != null) highlight.SetHighlight(true);
+        if (highlight != null) highlight.SetHighlight(true, isPath ? pathMaterial : highlightMaterial);
     }
 
-    public void DisableHighlight()
+    public void DisableHighlight(bool isPath)
     {
-        if (highlight != null) highlight.SetHighlight(false);
+        if (highlight != null) highlight.SetHighlight(false, isPath ? pathMaterial : highlightMaterial);
     }
 
     internal void ResetHighlight()

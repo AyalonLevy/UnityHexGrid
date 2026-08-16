@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using UnityEngine;
 
 [RequireComponent(typeof(GridManager))]
@@ -9,8 +10,12 @@ public class HexGridSelector : Selector
     // Public API Events for external tool integration
     public event Action<HexTileData> OnTileSelected;
     public event Action<HexTileData> OnTileDeselected;
+    public event Action<HexTileData> OnTileClicked;
+
+    [HideInInspector] public bool isSelectable = false;
 
     public HexTileData CurrentSelectedTile => currentlySelectedTile;
+    public void SetSelectableState(bool canBeSelected) { isSelectable = canBeSelected; }
 
     protected override void HandleRaycastHit(RaycastHit hit)
     {
@@ -18,17 +23,40 @@ public class HexGridSelector : Selector
 
         if (hitTile != null)
         {
-            if (hitTile != currentlySelectedTile)
+            // 1. Check if pathfinding is active and this clicked tile is a highlighted movement target
+            if (TryGetComponent<MovementSystem>(out var movementSystem) &&
+                movementSystem.HasActiveUnit &&
+                movementSystem.IsHexInRange(hitTile.tileCoordinates))
             {
-                SelectTile(hitTile);
+                // It is highlighted as a valid move destination! Send action and return.
+                movementSystem.ProcessMovementClick(hitTile);
+                return;
             }
-            else
+
+            // 2. Otherwise, it is NOT highlighted for movement. Continue with normal tile selection/building logic.
+            if (isSelectable)
             {
-                ClearSelection();
+                if (hitTile != currentlySelectedTile)
+                {
+                    SelectTile(hitTile);
+                }
+                else
+                {
+                    ClearSelection();
+                }
             }
         }
         else
         {
+            // Check if the tile is part of a possible path
+            if (TryGetComponent<MovementSystem>(out var movementSystem) && movementSystem.HasActiveUnit)
+            {
+                if (currentlySelectedTile != null && movementSystem.IsHexInRange(currentlySelectedTile.tileCoordinates))
+                {
+                    return;
+                }
+            }
+
             ClearSelection();
         }
     }
@@ -42,7 +70,7 @@ public class HexGridSelector : Selector
     {
         if (currentlySelectedTile != null)
         {
-            currentlySelectedTile.DisableHighlight();
+            currentlySelectedTile.DisableHighlight(false);
             OnTileDeselected?.Invoke(currentlySelectedTile);
         }
 
@@ -50,20 +78,18 @@ public class HexGridSelector : Selector
 
         if (currentlySelectedTile != null)
         {
-            currentlySelectedTile.EnableHighlight();
+            currentlySelectedTile.EnableHighlight(false);
             OnTileSelected?.Invoke(currentlySelectedTile);
-            Debug.Log($"Selected Tile at cube coordinates {currentlySelectedTile.tileCoordinates}");
         }
     }
 
-    private void ClearSelection()
+    public void ClearSelection()
     {
         if (currentlySelectedTile != null)
         {
-            currentlySelectedTile.DisableHighlight();
+            currentlySelectedTile.DisableHighlight(false);
             OnTileDeselected?.Invoke(currentlySelectedTile);
             currentlySelectedTile = null;
-            Debug.Log("Tile Selection Cleared.");
         }
     }
 }

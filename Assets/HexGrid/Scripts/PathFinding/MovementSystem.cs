@@ -14,6 +14,8 @@ public class MovementSystem : MonoBehaviour
     private List<Vector3Int> currentPath = new();
     private Unit selectedUnit;
 
+    public bool HasActiveUnit => selectedUnit != null;
+
     private void OnEnable()
     {
         if (unitSelector != null)
@@ -24,7 +26,7 @@ public class MovementSystem : MonoBehaviour
 
         if (hexGridSelector != null)
         {
-            hexGridSelector.OnTileSelected += HandleTileSelected;
+            hexGridSelector.OnTileClicked += ProcessMovementClick;
         }
     }
 
@@ -38,7 +40,7 @@ public class MovementSystem : MonoBehaviour
 
         if (hexGridSelector != null)
         {
-            hexGridSelector.OnTileSelected -= HandleTileSelected;
+            hexGridSelector.OnTileClicked -= ProcessMovementClick;
         }
     }
 
@@ -59,6 +61,14 @@ public class MovementSystem : MonoBehaviour
 
         selectedUnit = unit;
         ShowRange(selectedUnit);
+
+        if (hexGridSelector != null && hexGridSelector.CurrentSelectedTile != null)
+        {
+            if (!IsHexInRange(hexGridSelector.CurrentSelectedTile.tileCoordinates))
+            {
+                hexGridSelector.ClearSelection();
+            }
+        }
     }
 
     private void HandleUnitDeselected(Unit unit)
@@ -67,7 +77,7 @@ public class MovementSystem : MonoBehaviour
         selectedUnit = null;
     }
 
-    private void HandleTileSelected(HexTileData clickedTile)
+    public void ProcessMovementClick(HexTileData clickedTile)
     {
         if (selectedUnit == null) return;
 
@@ -84,7 +94,10 @@ public class MovementSystem : MonoBehaviour
             MoveUnit();
 
             // 3. Cleanup selection state after moving
-            unitSelector.ClearSelection();
+            if (unitSelector != null)
+            {
+                unitSelector.ClearSelection();
+            }
             selectedUnit = null;
         }
     }
@@ -99,7 +112,7 @@ public class MovementSystem : MonoBehaviour
 
             if (tile != null)
             {
-                tile.DisableHighlight();
+                tile.DisableHighlight(true);
             }
         }
         movementRange = new();
@@ -109,12 +122,16 @@ public class MovementSystem : MonoBehaviour
     {
         CalculateRange(unit);
 
-        foreach (Vector3Int hexPosi in movementRange.GetRangePositions())
+        Vector3Int unitPos = gridManager.GetClosestHex(selectedUnit.transform.position);
+
+        foreach (Vector3Int hexPosition in movementRange.GetRangePositions())
         {
-            HexTileData tile = gridManager.GetTileAt(hexPosi);
+            if (unitPos == hexPosition) continue;
+
+            HexTileData tile = gridManager.GetTileAt(hexPosition);
             if (tile != null && !tile.IsObstacle())
             {
-                tile.EnableHighlight();
+                tile.EnableHighlight(true);
             }
         }
     }
@@ -145,7 +162,9 @@ public class MovementSystem : MonoBehaviour
             {
                 gridManager.GetTileAt(hexPosition).ResetHighlight();
             }
+
             currentPath = movementRange.GetPathTo(selectedHexPosition);
+
             foreach (Vector3Int hexPosition in currentPath)
             {
                 gridManager.GetTileAt(hexPosition).HighlightPath();
@@ -156,8 +175,6 @@ public class MovementSystem : MonoBehaviour
     public void MoveUnit()
     {
         if (selectedUnit == null || currentPath == null || currentPath.Count == 0) return;
-
-        Debug.Log($"Moving unit {selectedUnit.name}");
 
         // Update the unit's current tile to the final destination of the path
         Vector3Int destinationCoord = currentPath.Last();

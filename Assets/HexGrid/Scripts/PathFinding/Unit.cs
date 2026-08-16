@@ -8,11 +8,15 @@ public class Unit : MonoBehaviour
 {
     [Header("Movement Settings")]
     [SerializeField] private int movementPoints = 20;
-
+    
     public int MovementPoints { get => movementPoints; }
 
     [SerializeField] private float movementDuration = 1.0f;
     [SerializeField] private float rotationDuration = 0.3f;
+
+    [Header("Unit Highlight Settings")]
+    [Tooltip("The unlit transparent material used for the highlight glow.")]
+    [SerializeField] private Material highlightMaterial;
 
     public HexTileData CurrentTile { get; set; }
 
@@ -24,21 +28,20 @@ public class Unit : MonoBehaviour
     private void Awake()
     {
         highlight = GetComponent<Highlight>();
-
         if (highlight != null)
         {
-            highlight.Initialize(transform);
+            highlight.InitializeHighlight(transform);
         }
     }
 
     internal void Deselect()
     {
-        highlight.SetHighlight(false);
+        highlight.SetHighlight(false, highlightMaterial);
     }
 
     public void Select()
     {
-        highlight.SetHighlight(true);
+        highlight.SetHighlight(true, highlightMaterial);
     }
 
     internal void MoveThroughPath(List<Vector3> currentPath)
@@ -90,12 +93,10 @@ public class Unit : MonoBehaviour
 
         if (pathPositions.Count > 0)
         {
-            Debug.Log("Selecting the next position!");
             StartCoroutine(RotatopnCoroutine(pathPositions.Dequeue(), rotationDuration));
         }
         else
         {
-            Debug.Log("Movement finished!");
             MovementFinished?.Invoke(this);
         }
     }

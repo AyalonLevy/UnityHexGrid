@@ -1,5 +1,4 @@
 using System;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class UnitSelector : Selector
@@ -32,7 +31,7 @@ public class UnitSelector : Selector
 
     protected override void HandleRaycastMiss()
     {
-        
+
     }
 
     private void SelectUnit(Unit newUnit)
@@ -49,7 +48,6 @@ public class UnitSelector : Selector
         {
             currentlySelectedUnit.Select();
             OnUnitSelected?.Invoke(currentlySelectedUnit);
-            Debug.Log($"Selected Unit: {currentlySelectedUnit.name}");
         }
     }
 
@@ -60,7 +58,6 @@ public class UnitSelector : Selector
             currentlySelectedUnit.Deselect();
             OnUnitDeselected?.Invoke(currentlySelectedUnit);
             currentlySelectedUnit = null;
-            Debug.Log("Unit Selection Cleared.");
         }
     }
 }

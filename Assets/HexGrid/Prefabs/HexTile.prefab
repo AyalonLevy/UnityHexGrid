@@ -52,6 +52,7 @@ MonoBehaviour:
   tileIndex: 0
   currentDomain: {fileID: 11400000, guid: 8b8e408bb6070b248ac5171885b3d11c, type: 2}
   previousDomain: {fileID: 0}
+  hexType: 0
   hasProp: 0
   manualPropSelection: {fileID: 0}
   previousManualProp: {fileID: 0}
@@ -61,8 +62,11 @@ MonoBehaviour:
   previousRotation: 0
   previousScale: 1
   tileHeight: 0.1
+  highlightMaterial: {fileID: 2100000, guid: 80aa6773bc444464a9a3b861de7d1ac4, type: 2}
+  pathMaterial: {fileID: 2100000, guid: 9d8c65b6a0498aa41be6ed56b71fd747, type: 2}
   visualsContainer: {fileID: 5716578996116677045}
   propsContainer: {fileID: 2014047214310685767}
+  isExplored: 1
   tileCoordinates: {x: 0, y: 0, z: 0}
 --- !u!114 &3267955363221784252
 MonoBehaviour:
@@ -76,7 +80,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 802a18fc44d95e346be2431cd79d87af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Highlight
-  highlightMaterial: {fileID: 2100000, guid: 80aa6773bc444464a9a3b861de7d1ac4, type: 2}
   scaleMultiplier: 1.02
 --- !u!114 &519109043316766230
 MonoBehaviour:
@@ -92,6 +95,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HexTileFogController
   fogVisualObject: {fileID: 0}
   fogMaterial: {fileID: 2100000, guid: e273109caf366e24e8361059f30872b5, type: 2}
+  exploredShadowColor: {r: 0.4, g: 0.4, b: 0.45, a: 1}
+  isFogOfWarEnabled: 0
+  currentState: 0
 --- !u!1 &2670619833751218984
 GameObject:
   m_ObjectHideFlags: 0

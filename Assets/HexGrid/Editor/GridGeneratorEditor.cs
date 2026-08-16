@@ -55,7 +55,7 @@ public class GridGeneratorEditor : Editor
             EditorGUILayout.PropertyField(gridDataFileProp);
         }
 
-        EditorGUILayout.Space(15);
+        EditorGUILayout.Space();
 
         EditorGUILayout.LabelField("Props Parameters", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(addProps);

@@ -75,8 +75,11 @@ public class GraphSearch
 
     public static List<Vector3Int> GeneratePathBFS(Vector3Int current, Dictionary<Vector3Int, Vector3Int?> visitedNodesDict)
     {
-        List<Vector3Int> path = new();
-        path.Add(current);
+        List<Vector3Int> path = new()
+        {
+            current
+        };
+
         while (visitedNodesDict[current] != null)
         {
             path.Add(visitedNodesDict[current].Value);
