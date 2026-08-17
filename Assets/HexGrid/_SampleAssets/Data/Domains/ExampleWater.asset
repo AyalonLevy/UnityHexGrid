@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: ExampleWater
   m_EditorClassIdentifier: Assembly-CSharp::TileDomain
   displayName: Water
-  editorTint: {r: 0.28773582, g: 0.572916, b: 1, a: 1}
+  hexType: 4

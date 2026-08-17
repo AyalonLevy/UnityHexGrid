@@ -17,8 +17,7 @@ public class HexGridDatabase : ScriptableObject
         [Tooltip("Relative weight/chance for this tile to be selected during random generation.")]
         public float spawnChance;
 
-        [Tooltip("Default flag indicating if this tile type can support props.")]
-        public bool hasProp;
+        [HideInInspector] public bool hasProp;
     }
 
     [System.Serializable]

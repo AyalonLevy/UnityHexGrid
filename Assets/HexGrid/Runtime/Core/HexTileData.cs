@@ -166,7 +166,7 @@ public class HexTileData : MonoBehaviour
         HexType.Road => 5,
         HexType.Default => 10,
         HexType.Difficult => 20,
-        HexType.Water => 30,    // TODO: add an option to go on water - "Jesus mode"
+        HexType.Water => 30,    // TODO: When implementing unit traits/skills (e.g., Water-Walking), evaluate the traversing unit here to return a lower cost or passable state.
         HexType.Obstacle => int.MaxValue,
         _ => 10 // Default
     };
@@ -321,23 +321,45 @@ public class HexTileData : MonoBehaviour
 
     public void EvaluateHexType()
     {
-        // 1. Check if domain implies Water
-        if (currentDomain != null && currentDomain.name.IndexOf("water", System.StringComparison.OrdinalIgnoreCase) >= 0)
+        // 1. Establish the base terrain from the Domain
+        hexType = currentDomain != null ? currentDomain.hexType : HexType.Default;
+
+        // 2. Apply Prop Overrides (if a prop exists)
+        if (hasProp && database != null && propIndex >= 0 && propIndex < database.props.Count)
         {
-            hexType = HexType.Water;
-        }
-        else
-        {
-            // 2. Check props: Having a prop makes standard terrain Difficult, removing it resets to Default
-            if (hasProp && database != null && propIndex >= 0 && propIndex < database.props.Count)
+            HexType propEffect = database.props[propIndex].terrainEffect;
+
+            // Treat standard/empty props as Difficult terrain by default
+            HexType appliedPropEffect = (propEffect == HexType.None || propEffect == HexType.Default) ? HexType.Difficult : propEffect;
+
+            // 3. Severity & Override Hierarchy
+            if (appliedPropEffect == HexType.Obstacle)
             {
-                HexType propEffect = database.props[propIndex].terrainEffect;
-                hexType = propEffect == HexType.None ? HexType.Difficult : propEffect;
+                // Obstacles always block the tile completely
+                hexType = HexType.Obstacle;
             }
-            else
+            else if (appliedPropEffect == HexType.Road)
             {
-                // 3. Fallback to default if no special domain or prop overrides it
-                hexType = HexType.Default;
+                // A bridge/road prop can pave over water or difficult terrain
+                if (hexType != HexType.Obstacle)
+                {
+                    hexType = HexType.Road;
+                }
+            }
+            else if (appliedPropEffect == HexType.Difficult)
+            {
+                // Debris shouldn't downgrade Water or Obstacles
+                if (hexType != HexType.Obstacle && hexType != HexType.Water)
+                {
+                    hexType = HexType.Difficult;
+                }
+            }
+            else if (appliedPropEffect == HexType.Water)
+            {
+                if (hexType != HexType.Obstacle)
+                {
+                    hexType = HexType.Water;
+                }
             }
         }
 

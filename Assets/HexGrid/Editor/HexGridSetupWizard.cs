@@ -3,8 +3,53 @@ using UnityEngine;
 
 public class HexGridSetupWizard : EditorWindow
 {
+    // --- Layout Constants ---
+    private const float WindowMinWidth = 520f;
+    private const float WindowMinHeight = 480f;
+    private const int CustomFontSize = 12;
+    private const int BoxPadding = 10;
+    private const float ContentSpacing = 10f;
+    private const float SectionSpacing = 15f;
+    private const float ButtonSmallWidth = 80f;
+    private const float ButtonMediumWidth = 100f;
+    private const float ButtonLargeWidth = 120f;
+    private const float StandardButtonHeight = 25f;
+
+    // --- Path & String Constants ---
+    private const string BaseFolderPath = "Assets/HexGrid";
+    private const string DataFolderPath = BaseFolderPath + "/Data";
+    private const string DomainsFolderPath = DataFolderPath + "/Domains";
+    private const string PrefabsFolderPath = BaseFolderPath + "/Prefabs";
+    private const string SamplePrefabsFolderPath = BaseFolderPath + "/_SampleAssets/Prefabs";
+    private const string SampleDatabasePath = BaseFolderPath + "/_SampleAssets/Data/ExampleHexGridDatabase.asset";
+
+    private const string DefaultGeneratorName = "HexGridGenerator";
+    private const string DefaultContainerName = "GridContainer";
+    private const string HexTilePrefabName = "HexTile.prefab";
+    private const string ExamplePlayerPrefabName = "ExamplePlayer.prefab";
+    private const string ExamplePlayerGameObjectName = "ExamplePlayer";
+
+    private const string DatabasePropertyPath = "gridDatabase";
+    private const string ContainerPropertyPath = "gridContainer";
+    private const string UndoGeneratorCreation = "Create Hex Grid Generator";
+    private const string UndoContainerCreation = "Create Grid Container";
+    private const string UndoPlayerInstantiate = "Instantiate Example Player";
+
+    // --- Gameplay Constants ---
+    private const float PlayerSpawnHeight = 0.6f;
+
     // --- Setup Control ---
-    private enum WizardStep { Welcome, SetupDatabase, PopulateDatabase, SetupSceneObject }
+    private enum WizardStep
+    {
+        Welcome,
+        Configuration,
+        PopulateDatabase,
+        HexTilePrefabSetup,
+        FeatureSelection,
+        GenerateGrid,
+        UnitSetupGuide
+    }
+
     private WizardStep currentStep = WizardStep.Welcome;
 
     // --- Configuration Fields ---
@@ -12,22 +57,25 @@ public class HexGridSetupWizard : EditorWindow
     [Tooltip("Name of the database asset that will be created.")]
     public string databaseAssetName = "HexGridDatabase";
 
+    [Tooltip("If true, uses the supplied ExampleHexGridDatabase asset.")]
+    public bool useExampleDatabase = true;
+
     [Tooltip("If empty, the wizard can automatically create a HexGridGenerator in your scene.")]
     public HexGridGenerator targetGenerator;
     public bool createNewGenerator = true;
 
-    private HexGridDatabase createdDatabase; // Keeps track if we already generated it
+    private HexGridDatabase activeDatabase;
     private GameObject newGridContainer;
-    private readonly string baseFolder = "Assets/HexGrid";
 
-
-    // This creates a menu item at the top of the Unity editor
     [MenuItem("Tools/Hex Grid/Run Setup Wizard")]
     public static void ShowWindow()
     {
         HexGridSetupWizard window = GetWindow<HexGridSetupWizard>(true, "Hex Grid Setup Guide");
-        window.minSize = new(500, 380);
+        window.minSize = new Vector2(WindowMinWidth, WindowMinHeight);
+
+        // Reset variables upon explicit window opening to prevent state caching
         window.currentStep = WizardStep.Welcome;
+        window.activeDatabase = null;
     }
 
     private void OnGUI()
@@ -38,13 +86,12 @@ public class HexGridSetupWizard : EditorWindow
 
     private void DrawWizardContent()
     {
-        GUILayout.Space(10);
+        GUILayout.Space(ContentSpacing);
 
-        // Custom style for help text
         GUIStyle helpStyle = new(EditorStyles.helpBox)
         {
-            fontSize = 12,
-            padding = new RectOffset(10, 10, 10, 10),
+            fontSize = CustomFontSize,
+            padding = new RectOffset(BoxPadding, BoxPadding, BoxPadding, BoxPadding),
             richText = true
         };
 
@@ -52,215 +99,454 @@ public class HexGridSetupWizard : EditorWindow
         {
             case WizardStep.Welcome:
                 GUILayout.Label("<b>Welcome to the Hex Grid Generator!</b>\n\n" +
-                                "This wizard will help you set up your database, tiles, and scene generator without breaking your configuration.\n\n" +
-                                "Click <b>Continue</b> to generate your workspace folders and read the setup guide, or <b>Skip Guide</b> to jump straight to creation.", helpStyle);
+                                "This wizard will help you set up your database, tiles, and scene generator.\n\n" +
+                                "Click <b>Continue</b> to configure your workspace, or <b>Skip Guide</b> to create a clean, unpopulated environment for manual setup.", helpStyle);
                 break;
 
-            case WizardStep.SetupDatabase:
-                GUILayout.Label("<b>STEP 1: Database & Asset Setup</b>\n\n" +
-                                "<i>We have automatically created the folder <b>Assets/HexGrid/Data/Domains</b> for you.</i>\n\n" +
-                                "This package uses ScriptableObjects to store data. You will interact with two types of assets:\n\n" +
-                                "<b>1. Tile Domains (The Categories)</b>\n" +
-                                "These represent terrain types (e.g., Grass, Desert). Props use these to know where they can spawn. Try creating one now!\n" +
-                                "<i>Action:</i> Right-click inside the new Domains folder -> <b>Create -> HexGrid -> Tile Domain</b>\n\n" +
-                                "<b>2. Database (The Master List)</b>\n" +
-                                "This holds all your tile prefabs and props.\n\n" +
-                                "Choose a name for your master database below so we can create it for you:", helpStyle);
+            case WizardStep.Configuration:
+                GUILayout.Label("<b>STEP 1: Global Configuration</b>\n\n" +
+                                "Configure your initial project settings before we generate the workspace folders.\n\n" +
+                                "<b>1. Database Settings:</b>\n" +
+                                "The database stores all your tile prefabs and domains.\n\n" +
+                                "<b>2. Scene Generator Setup:</b>\n" +
+                                "The generator builds your world in Edit Mode.", helpStyle);
 
-                GUILayout.Space(15);
+                GUILayout.Space(SectionSpacing);
 
-                // Disable the text field if the database is already created to prevent renaming issues mid-wizard
-                GUI.enabled = createdDatabase == null;
+                EditorGUI.BeginChangeCheck();
+                useExampleDatabase = EditorGUILayout.Toggle("Use Example Database", useExampleDatabase);
+
+                GUI.enabled = !useExampleDatabase;
                 databaseAssetName = EditorGUILayout.TextField("Database Asset Name", databaseAssetName);
                 GUI.enabled = true;
 
-                if (string.IsNullOrEmpty(databaseAssetName))
+                if (!useExampleDatabase && string.IsNullOrEmpty(databaseAssetName))
                 {
                     EditorGUILayout.HelpBox("Database name cannot be empty!", MessageType.Error);
                 }
-                break;
 
-            case WizardStep.PopulateDatabase:
-                GUILayout.Label("<b>STEP 2: Populating the Database</b>\n\n" +
-                                "<i>We've created and selected your Database asset! Check your Inspector window.</i>\n\n" +
-                                "Here is how to structure your custom generation rules:\n\n" +
-                                "<b>Available Domains:</b>\n" +
-                                "Drag the Tile Domain assets you just created into this list.\n\n" +
-                                "<b>Tiles Database:</b>\n" +
-                                "Add your hex tile prefabs here. For each tile, assign it a Domain (e.g., Grass) and give it a <b>Spawn Chance</b> (0 to 1).\n\n" +
-                                "<b>Props Database:</b>\n" +
-                                "Add prop prefabs (like trees or rocks). Because of our setup, a single prop can be assigned to <b>multiple</b> Domains by adding them to its list!\n\n" +
-                                "<i>Remember: We included some basic prefabs in the package for you to test with!</i>", helpStyle);
-                break;
-
-            case WizardStep.SetupSceneObject:
-                GUILayout.Label("<b>STEP 3: Scene Generator Setup</b>\n\n" +
-                                "The HexGridGenerator script builds your world in Edit Mode.\n\n" +
-                                "• If you don't have one in your scene, this wizard can automatically create a GameObject with the component and link your new database to it.", helpStyle);
-
-                GUILayout.Space(15);
+                GUILayout.Space(ContentSpacing);
 
                 targetGenerator = (HexGridGenerator)EditorGUILayout.ObjectField("Target Generator", targetGenerator, typeof(HexGridGenerator), true);
                 createNewGenerator = EditorGUILayout.Toggle("Create New If Missing", createNewGenerator);
+                break;
+
+            case WizardStep.PopulateDatabase:
+                if (useExampleDatabase)
+                {
+                    GUILayout.Label("<b>STEP 2: Reviewing the Database</b>\n\n" +
+                                    "<i>We have assigned the Example Database to your generator and highlighted it for you.</i>\n\n" +
+                                    "Take a moment to explore it in the Inspector as a reference for how data is structured. " +
+                                    "It contains pre-configured Domains, Hex Tiles, and Props.", helpStyle);
+                }
+                else
+                {
+                    GUILayout.Label("<b>STEP 2: Populating Your Database</b>\n\n" +
+                                    "<i>We have highlighted your empty Domains folder in the Project window.</i>\n\n" +
+                                    "<b>1. Available Domains:</b> Right-click in the highlighted folder -> Create -> HexGrid -> Tile Domain. Create a few and add them to your Database.\n" +
+                                    "<b>2. Tiles Database:</b> Add your hex tile prefabs. Assign each a Domain and a <b>Spawn Chance</b>.\n" +
+                                    "<b>3. Props Database:</b> Add props (trees, rocks) and assign them to multiple Domains.", helpStyle);
+
+                    GUILayout.Space(SectionSpacing);
+
+                    GUILayout.BeginHorizontal();
+                    if (GUILayout.Button("Ping My Domains Folder", GUILayout.Height(StandardButtonHeight)))
+                    {
+                        PingFolder(DomainsFolderPath, DataFolderPath);
+                    }
+                    if (GUILayout.Button("Ping My Database", GUILayout.Height(StandardButtonHeight)))
+                    {
+                        PingAsset(activeDatabase);
+                    }
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.Space(ContentSpacing);
+
+                    if (GUILayout.Button("View Example Database (Reference)", GUILayout.Height(StandardButtonHeight)))
+                    {
+                        PingExampleDatabase();
+                    }
+                }
+                break;
+
+            case WizardStep.HexTilePrefabSetup:
+                GUILayout.Label("<b>STEP 3: Hex Tile Prefab Setup</b>\n\n" +
+                                "<i>We have kept your generator selected and pinged your HexTile prefab in the Project window.</i>\n\n" +
+                                "<b>Action Required:</b>\n" +
+                                "• Drag the pinged <b>HexTile prefab</b> from the Project window into the <b>`Base Hex Tile Prefab`</b> field on the `HexGridGenerator` in the Inspector.\n\n" +
+                                "<b>Prefab Structure Reminder:</b>\n" +
+                                "• This prefab acts as the empty container for your geometry (Visuals & Props) that you set up in the database.", helpStyle);
+                break;
+
+            case WizardStep.FeatureSelection:
+                GUILayout.Label("<b>STEP 4: Generator Settings & Features</b>\n\n" +
+                                "<i>Review the properties on your generator component in the Inspector.</i>\n\n" +
+                                "<b>Action Required:</b>\n" +
+                                "• Choose and enable the options you need for your game:\n\n" +
+                                "• <b>Hex Orientation:</b> The example prefabs use point-top hexes. If you prefer flat-top hexes, ensure the <b>Is Flat Topped</b> option is checked.\n" +
+                                "• <b>Add Props:</b> Check this to allow the generator to automatically spawn environmental props on your tiles.\n" +
+                                "• <b>Grid Selection:</b> Enables raycasting and mouse input polling.\n" +
+                                "• <b>Fog of War:</b> Manages Hidden, Explored, and Visible tile states.\n" +
+                                "• <b>Pathfinding:</b> Integrates BFS range calculations and unit movement.", helpStyle);
+                break;
+
+            case WizardStep.GenerateGrid:
+                GUILayout.Label("<b>STEP 5: Generate Grid</b>\n\n" +
+                                "You are fully configured and ready to build your world!\n\n" +
+                                "<i>We have selected your generator in the scene.</i>\n\n" +
+                                "• Navigate to the Inspector window and click the <b>Generate Grid</b> button directly on the `HexGridGenerator` component.\n" +
+                                "• Once generated, click Continue to proceed.", helpStyle);
+                break;
+
+            case WizardStep.UnitSetupGuide:
+                GUILayout.Label("<b>STEP 6: Unit Setup & Example Player</b>\n\n" +
+                                "<i>Pathfinding is enabled on the generator, so we have instantiated and selected the `ExamplePlayer` in your scene.</i>\n\n" +
+                                "• Inspect the player unit to verify its integration with movement event channels and coordinate snapping.", helpStyle);
                 break;
         }
     }
 
     private void DrawBottomButtons()
     {
-        // Pushes the buttons to the very bottom of the window
         GUILayout.FlexibleSpace();
         GUILayout.BeginHorizontal();
 
         // --- Back Button ---
         GUI.enabled = currentStep != WizardStep.Welcome;
-        if (GUILayout.Button("Back", GUILayout.Width(80), GUILayout.Height(25)))
+        if (GUILayout.Button("Back", GUILayout.Width(ButtonSmallWidth), GUILayout.Height(StandardButtonHeight)))
         {
-            currentStep--;
+            HandleStepBackward();
         }
-        GUI.enabled = true; // Reset GUI state
+        GUI.enabled = true;
 
-        GUILayout.FlexibleSpace();  // Space between left and right buttons
+        GUILayout.FlexibleSpace();
 
-        // --- Right Side Button (Skip/Continue/Finish) ---
-        if (currentStep == WizardStep.SetupSceneObject)
+        // --- Right Side Navigation ---
+        bool isPathfindingEnabled = targetGenerator != null && targetGenerator.EnablePathFinder;
+        bool isLastStep = (currentStep == WizardStep.UnitSetupGuide) || (currentStep == WizardStep.GenerateGrid && !isPathfindingEnabled);
+
+        if (isLastStep)
         {
-            if (GUILayout.Button("Finish Setup", GUILayout.Width(120), GUILayout.Height(25)))
+            if (GUILayout.Button("Finish Setup", GUILayout.Width(ButtonLargeWidth), GUILayout.Height(StandardButtonHeight)))
             {
-                FinalizeSetup();
-                Close();    // Explicitly close the window when done
+                Close();
             }
         }
         else
         {
-            if (GUILayout.Button("Skip Guide", GUILayout.Width(100), GUILayout.Height(25)))
+            if (currentStep == WizardStep.Welcome || currentStep == WizardStep.Configuration)
             {
-                CreateWorkspaceFolders();
-                CreateDatabaseAsset();
-                FinalizeSetup();
-                Close();    // Explicitly close the window when done
+                if (GUILayout.Button("Skip Guide", GUILayout.Width(ButtonMediumWidth), GUILayout.Height(StandardButtonHeight)))
+                {
+                    SkipSetup();
+                    return;
+                }
+                GUILayout.Space(ContentSpacing);
             }
 
-            GUILayout.Space(5);
-
-            // Disable the Continue button if the database name is empty on Step 1
-            bool canContinue = currentStep != WizardStep.SetupDatabase || !string.IsNullOrEmpty(databaseAssetName);
+            bool canContinue = currentStep != WizardStep.Configuration || useExampleDatabase || !string.IsNullOrEmpty(databaseAssetName);
             GUI.enabled = canContinue;
 
-            if (GUILayout.Button("Continue", GUILayout.Width(120), GUILayout.Height(25)))
+            if (GUILayout.Button("Continue", GUILayout.Width(ButtonLargeWidth), GUILayout.Height(StandardButtonHeight)))
             {
-                if (currentStep == WizardStep.Welcome)
-                {
-                    CreateWorkspaceFolders();
-                    PingDomainFolders();
-                }
-                else if (currentStep == WizardStep.SetupDatabase)
-                {
-                    CreateDatabaseAsset();
-                    if (createdDatabase != null)
-                    {
-                        // Select the newly created database so the inspector will be visible
-                        Selection.activeObject = createdDatabase;
-                        EditorGUIUtility.PingObject(createdDatabase);
-                    }
-                }
-
-                currentStep++;
+                HandleStepForward(isPathfindingEnabled);
             }
-
             GUI.enabled = true;
         }
 
         GUILayout.EndHorizontal();
-        GUILayout.Space(10);
+        GUILayout.Space(ContentSpacing);
+    }
+
+    private void HandleStepForward(bool isPathfindingEnabled)
+    {
+        switch (currentStep)
+        {
+            case WizardStep.Welcome:
+                currentStep = WizardStep.Configuration;
+                break;
+
+            case WizardStep.Configuration:
+                ExecuteFullSetup();
+                currentStep = WizardStep.PopulateDatabase;
+                if (useExampleDatabase)
+                {
+                    PingAsset(activeDatabase);
+                }
+                else
+                {
+                    PingFolder(DomainsFolderPath, DataFolderPath);
+                }
+                break;
+
+            case WizardStep.PopulateDatabase:
+                currentStep = WizardStep.HexTilePrefabSetup;
+                PingHexTilePrefab();
+                break;
+
+            case WizardStep.HexTilePrefabSetup:
+                currentStep = WizardStep.FeatureSelection;
+                HighlightGeneratorInInspector();
+                break;
+
+            case WizardStep.FeatureSelection:
+                currentStep = WizardStep.GenerateGrid;
+                break;
+
+            case WizardStep.GenerateGrid:
+                if (isPathfindingEnabled)
+                {
+                    InstantiateExamplePlayer();
+                    currentStep = WizardStep.UnitSetupGuide;
+                }
+                break;
+        }
+    }
+
+    private void HandleStepBackward()
+    {
+        currentStep--;
+
+        switch (currentStep)
+        {
+            case WizardStep.PopulateDatabase:
+                if (useExampleDatabase)
+                {
+                    PingAsset(activeDatabase);
+                }
+                else
+                {
+                    PingFolder(DomainsFolderPath, DataFolderPath);
+                }
+                break;
+
+            case WizardStep.HexTilePrefabSetup:
+                PingHexTilePrefab();
+                break;
+
+            case WizardStep.FeatureSelection:
+            case WizardStep.GenerateGrid:
+                HighlightGeneratorInInspector();
+                break;
+        }
+    }
+
+    private void SkipSetup()
+    {
+        CreateWorkspaceFolders();
+
+        if (targetGenerator == null && createNewGenerator)
+        {
+            CreateSceneGeneratorOnly();
+        }
+
+        Debug.Log("Setup Skipped. Clean workspace folders and scene generator created.");
+        Close();
+    }
+
+    private void ExecuteFullSetup()
+    {
+        CreateWorkspaceFolders();
+        CreateDatabaseAsset();
+
+        if (targetGenerator == null && createNewGenerator)
+        {
+            CreateSceneGeneratorOnly();
+        }
+
+        LinkDatabaseToGenerator();
     }
 
     private void CreateWorkspaceFolders()
     {
-        string dataFolder = $"{baseFolder}/Data";
-        string domainsFolder = $"{dataFolder}/Domains";
-
-        if (!AssetDatabase.IsValidFolder(baseFolder))
+        if (!AssetDatabase.IsValidFolder(BaseFolderPath))
             AssetDatabase.CreateFolder("Assets", "HexGrid");
 
-        if (!AssetDatabase.IsValidFolder(dataFolder))
-            AssetDatabase.CreateFolder(baseFolder, "Data");
+        if (!AssetDatabase.IsValidFolder(DataFolderPath))
+            AssetDatabase.CreateFolder(BaseFolderPath, "Data");
 
-        if (!AssetDatabase.IsValidFolder(domainsFolder))
-            AssetDatabase.CreateFolder(dataFolder, "Domains");
+        if (!AssetDatabase.IsValidFolder(DomainsFolderPath))
+            AssetDatabase.CreateFolder(DataFolderPath, "Domains");
+
+        if (!AssetDatabase.IsValidFolder(PrefabsFolderPath))
+            AssetDatabase.CreateFolder(BaseFolderPath, "Prefabs");
 
         AssetDatabase.Refresh();
     }
 
     private void CreateDatabaseAsset()
     {
-        // Don't create if the user clicked "Back" and then "Continue" again
-        if (createdDatabase != null) return;
+        // Re-evaluate database state dynamically based on user choices
+        if (useExampleDatabase)
+        {
+            // Attempt 1: Strict explicit path
+            HexGridDatabase existingSampleDb = AssetDatabase.LoadAssetAtPath<HexGridDatabase>(SampleDatabasePath);
+            if (existingSampleDb != null)
+            {
+                activeDatabase = existingSampleDb;
+                return;
+            }
 
-        string dataFolder = $"{baseFolder}/Data";
+            // Attempt 2: Fallback GUID search in case the user moved the folder
+            string[] guids = AssetDatabase.FindAssets("ExampleHexGridDatabase t:HexGridDatabase");
+            if (guids.Length > 0)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+                activeDatabase = AssetDatabase.LoadAssetAtPath<HexGridDatabase>(path);
+                if (activeDatabase != null) return;
+            }
 
-        createdDatabase = ScriptableObject.CreateInstance<HexGridDatabase>();
-        string assetPath = $"{dataFolder}/{databaseAssetName}.asset";
+            Debug.LogWarning("Example Database not found anywhere in the project. Generating a new blank one instead.");
+        }
 
-        AssetDatabase.CreateAsset(createdDatabase, assetPath);
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
+        // --- Create or Load Custom Database ---
+        string assetPath = $"{DataFolderPath}/{databaseAssetName}.asset";
+        HexGridDatabase existingDb = AssetDatabase.LoadAssetAtPath<HexGridDatabase>(assetPath);
+
+        if (existingDb != null)
+        {
+            activeDatabase = existingDb;
+        }
+        else
+        {
+            activeDatabase = ScriptableObject.CreateInstance<HexGridDatabase>();
+            AssetDatabase.CreateAsset(activeDatabase, assetPath);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
     }
 
-    private void PingDomainFolders()
+    private void CreateSceneGeneratorOnly()
     {
-        // Highlight the new Data folder in the Project window to guide the user
-        Object folderObj = AssetDatabase.LoadAssetAtPath<Object>($"{baseFolder}/Data/Domains");
+        GameObject newGameObj = new(DefaultGeneratorName);
+        targetGenerator = newGameObj.AddComponent<HexGridGenerator>();
+        Undo.RegisterCreatedObjectUndo(newGameObj, UndoGeneratorCreation);
+
+        GameObject newGridContainerObj = new(DefaultContainerName);
+        Undo.RegisterCreatedObjectUndo(newGridContainerObj, UndoContainerCreation);
+        newGridContainer = newGridContainerObj;
+    }
+
+    private void LinkDatabaseToGenerator()
+    {
+        if (targetGenerator == null) return;
+
+        SerializedObject serializedGenerator = new(targetGenerator);
+
+        if (activeDatabase != null)
+        {
+            SerializedProperty dbProp = serializedGenerator.FindProperty(DatabasePropertyPath);
+            if (dbProp != null) dbProp.objectReferenceValue = activeDatabase;
+        }
+
+        if (newGridContainer != null)
+        {
+            SerializedProperty gridContainerProp = serializedGenerator.FindProperty(ContainerPropertyPath);
+            if (gridContainerProp != null) gridContainerProp.objectReferenceValue = newGridContainer.transform;
+        }
+
+        serializedGenerator.ApplyModifiedProperties();
+        Debug.Log("Hex Grid Generator configured and linked successfully!");
+    }
+
+    private void PingAsset(Object asset)
+    {
+        if (asset != null)
+        {
+            EditorUtility.FocusProjectWindow();
+            Selection.activeObject = asset;
+            EditorGUIUtility.PingObject(asset);
+        }
+    }
+
+    private void PingExampleDatabase()
+    {
+        Object exampleDb = AssetDatabase.LoadAssetAtPath<Object>(SampleDatabasePath);
+        if (exampleDb != null)
+        {
+            PingAsset(exampleDb);
+            return;
+        }
+
+        string[] guids = AssetDatabase.FindAssets("ExampleHexGridDatabase t:HexGridDatabase");
+        if (guids.Length > 0)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+            Object fallbackDb = AssetDatabase.LoadAssetAtPath<Object>(path);
+            PingAsset(fallbackDb);
+        }
+        else
+        {
+            Debug.LogWarning("Example Database could not be found.");
+        }
+    }
+
+    private void PingHexTilePrefab()
+    {
+        string prefabPath = $"{PrefabsFolderPath}/{HexTilePrefabName}";
+        Object prefabObj = AssetDatabase.LoadAssetAtPath<Object>(prefabPath);
+
+        if (prefabObj != null)
+        {
+            EditorGUIUtility.PingObject(prefabObj);
+        }
+        else
+        {
+            PingFolder(PrefabsFolderPath, PrefabsFolderPath);
+        }
+
+        if (targetGenerator != null)
+        {
+            Selection.activeGameObject = targetGenerator.gameObject;
+        }
+    }
+
+    private void PingFolder(string primaryPath, string fallbackPath)
+    {
+        string targetPath = AssetDatabase.IsValidFolder(primaryPath) ? primaryPath : fallbackPath;
+        Object folderObj = AssetDatabase.LoadAssetAtPath<Object>(targetPath);
         if (folderObj != null)
         {
-            // Focuses the Project window, select the folder, and slightly flashes/pings it
-            EditorUtility.FocusProjectWindow();
-            Selection.activeObject = folderObj;
             EditorGUIUtility.PingObject(folderObj);
         }
     }
 
-    private void FinalizeSetup()
+    private void HighlightGeneratorInInspector()
     {
-        // 1. Handle Generator checking / creation
-        if (targetGenerator == null && createNewGenerator)
-        {
-            GameObject newGameObj = new("HexGridGenerator");
-            targetGenerator = newGameObj.AddComponent<HexGridGenerator>();
-
-            // Undo support for creation
-            Undo.RegisterCreatedObjectUndo(newGameObj, "Create Hex Grid Generator");
-
-            // Create the GridContainer
-            GameObject newGridContainerObj = new("GridContainer");
-
-            // Undo support for creation
-            Undo.RegisterCreatedObjectUndo(newGridContainerObj, "Create Grid Container");
-            newGridContainer = newGridContainerObj;
-
-            Debug.Log("Create a new HexGridGenerator GameObject in the scene.");
-        }
-
-        // 2. Automatically link database to generator
         if (targetGenerator != null)
         {
-            // Use SerializedObject to safely assign reference in Editor scripts
-            SerializedObject serializeGenerator = new(targetGenerator);
-            SerializedProperty dbProp = serializeGenerator.FindProperty("gridDatabase");
-
-            dbProp.objectReferenceValue = createdDatabase;
-
-            if (newGridContainer != null)
-            {
-                SerializedProperty gridContainerProp = serializeGenerator.FindProperty("gridContainer");
-                gridContainerProp.objectReferenceValue = newGridContainer.transform;
-            }
-
-            serializeGenerator.ApplyModifiedProperties();
-
             Selection.activeGameObject = targetGenerator.gameObject;
+            EditorGUIUtility.PingObject(targetGenerator.gameObject);
         }
+    }
 
-        Debug.Log($"<color=green>Hex Grid Setup Complete!</Color> You are ready to generate.");
+    private void InstantiateExamplePlayer()
+    {
+        string primaryPrefabPath = $"{SamplePrefabsFolderPath}/{ExamplePlayerPrefabName}";
+        string fallbackPrefabPath = $"{PrefabsFolderPath}/{ExamplePlayerPrefabName}";
+
+        string finalPath = AssetDatabase.LoadAssetAtPath<GameObject>(primaryPrefabPath) != null ? primaryPrefabPath : fallbackPrefabPath;
+        GameObject playerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(finalPath);
+
+        if (playerPrefab != null)
+        {
+            GameObject existingPlayer = GameObject.Find(ExamplePlayerGameObjectName);
+            if (existingPlayer == null)
+            {
+                GameObject playerInstance = (GameObject)PrefabUtility.InstantiatePrefab(playerPrefab);
+                if (playerInstance != null)
+                {
+                    Undo.RegisterCreatedObjectUndo(playerInstance, UndoPlayerInstantiate);
+                    playerInstance.transform.position = new Vector3(0f, PlayerSpawnHeight, 0f);
+                    Selection.activeGameObject = playerInstance;
+                    EditorGUIUtility.PingObject(playerInstance);
+                }
+            }
+            else
+            {
+                Selection.activeGameObject = existingPlayer;
+                EditorGUIUtility.PingObject(existingPlayer);
+            }
+        }
     }
 }

@@ -49,6 +49,11 @@ public class HexGridGenerator : MonoBehaviour
     [SerializeField] private bool enableFogOfWar = true;
     [SerializeField] private bool enablePathFinder = true;
 
+    // --- Public Getters for Wizard & External Systems ---
+    public bool EnableGridSelection => enableGridSelection;
+    public bool EnableFogOfWar => enableFogOfWar;
+    public bool EnablePathFinder => enablePathFinder;
+
     [Header("Grid Settings")]
     [SerializeField] private bool isFlatTopped = false;
     [Tooltip("The length of the hexagon edge")]
@@ -58,7 +63,7 @@ public class HexGridGenerator : MonoBehaviour
     [SerializeField] private Transform gridContainer;
 
     [Tooltip("Select grid shape")]
-    [SerializeField] private GridShape gridShape = GridShape.Rectangle;
+    [SerializeField] private GridShape gridShape = GridShape.Hexagonal;
 
     [SerializeField] private Vector2 gridSize = new(4, 5);
     [Tooltip("Number of tiles rings")]
