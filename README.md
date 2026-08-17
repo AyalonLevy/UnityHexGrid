@@ -1,15 +1,30 @@
-## Sources:
-### Main Source
-https://www.redblobgames.com/grids/hexagons/
-### YouTube videos:
-- https://www.youtube.com/watch?v=nbxhnCvexdA
-- https://www.youtube.com/playlist?list=PLcRSafycjWFdahp7K-GJBl4NUwzhVmAby
-- https://www.youtube.com/watch?v=wxVgIH0j8Wg&t=10s
-
-
 # Unity Hex Grid Generator & Pathfinding System
 
-![Demo](_SampleAssets/demo.gif) *(Note: Replace with an actual GIF of your grid/pathfinding in action)*
+<div align="center">
+  <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border: none;">
+    <tr>
+      <!-- GIF 1 + Caption -->
+      <td align="center" style="padding: 0; border: none;">
+        <img src="Assets/HexGrid/Documentation~/Media/GridGenerator.gif" alt="Procedural Generation" width="380" /><br>
+        <b>Procedural Generation</b>
+      </td>
+      <!-- Gap 1 (Adjust width to control spacing) -->
+      <td width="25" style="border: none;"></td>
+      <!-- GIF 2 + Caption -->
+      <td align="center" style="padding: 0; border: none;">
+        <img src="Assets/HexGrid/Documentation~/Media/GridFromFile.gif" alt="Load From File" width="380" /><br>
+        <b>Load From JSON</b>
+      </td>
+      <!-- Gap 2 (Adjust width to control spacing) -->
+      <td width="25" style="border: none;"></td>
+      <!-- GIF 3 + Caption -->
+      <td align="center" style="padding: 0; border: none;">
+        <img src="Assets/HexGrid/Documentation~/Media/FoW.gif" alt="Fog of War & Pathfinding" width="380" /><br>
+        <b>Fog of War & Pathfinding</b>
+      </td>
+    </tr>
+  </table>
+</div>
 
 A robust, data-driven Hexagonal Grid generation framework built for **Unity 6.3**. This package provides a highly modular architecture for generating grid-based worlds, handling terrain types, spawning environmental props, and managing advanced tactical subsystems like Fog of War and BFS Pathfinding.
 
@@ -47,6 +62,67 @@ Assets/HexGrid/
 ├── _SampleAssets/     # Demo scene, example database, and sample prefabs
 ├── Documentation~/    # Detailed manual and API reference (hidden from Unity compiler)
 └── package.json       # UPM Package definition
+```
+
+## Developer API & Integration
+
+The Hex Grid framework is highly modular. Instead of forcing rigid function calls, the architecture is event-driven. Other systems (like UI, Game Managers, or AI) can easily interact with the grid by subscribing to selector events.
+
+### 1. Listening for Grid Interactions
+The `HexGridSelector` broadcasts events when a player hovers, selects, or clicks on the grid. You can subscribe to these instance events to trigger custom game logic (e.g., updating UI panels).
+
+```csharp
+using UnityEngine;
+
+public class CustomGameManager : MonoBehaviour
+{
+    [SerializeField] private HexGridSelector gridSelector;
+
+    private void OnEnable()
+    {
+        // Subscribe to grid interaction events
+        if (gridSelector != null)
+        {
+            gridSelector.OnTileSelected += HandleTileSelected;
+            gridSelector.OnTileClicked += HandleTileClicked;
+        }
+    }
+
+    private void OnDisable()
+    {
+        // Always unsubscribe to prevent memory leaks
+        if (gridSelector != null)
+        {
+            gridSelector.OnTileSelected -= HandleTileSelected;
+            gridSelector.OnTileClicked -= HandleTileClicked;
+        }
+    }
+
+    private void HandleTileSelected(HexTileData selectedTile)
+    {
+        Debug.Log($"Tile highlighted at Cube Coordinates: {selectedTile.tileCoordinates}");
+        Debug.Log($"Terrain Type: {selectedTile.hexType} | Movement Cost: {selectedTile.GetCost()}");
+    }
+
+    private void HandleTileClicked(HexTileData clickedTile)
+    {
+        Debug.Log($"Action executed on tile: {clickedTile.tileCoordinates}");
+    }
+}
+```
+
+### 2. Pathfinding & Movement Pipeline
+
+Pathfinding is handled automatically via the MovementSystem component, which orchestrates communication between the grid and your units. You do not need to call pathfinding math manually; instead, the system reacts to player input:
+1. **Unit Selection:** When a unit is selected via the UnitSelector, the MovementSystem detects this and automatically calculates the valid Breadth-First Search (BFS) movement range based on the unit's MovementPoints.
+2. **Highlighting:** Valid tiles within range are highlighted automatically.
+3. **Execution:** When the player clicks a valid tile, the HexGridSelector fires OnTileClicked. The MovementSystem catches this, generates the exact path, and commands the Unit to begin moving along the world coordinates.
+
+If you need to inject these dependencies manually (e.g., if spawning a map at runtime), you can initialize the system via code:
+
+```csharp
+// Example of runtime dependency injection
+movementSystem.InjectComponents(gridManager, unitSelector, hexGridSelector);
 ```
 
 ## Sources & Inspiration
