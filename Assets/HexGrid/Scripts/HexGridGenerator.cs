@@ -34,6 +34,7 @@ public enum GridShape
 public class HexGridGenerator : MonoBehaviour
 {
     private const float FogGap = 0.05f;
+    private const float FlatTopAngleCorrection = 30.0f;
 
     [Header("Database Reference")]
     [Tooltip("Assign your external HexGridDatabase asset here.")]
@@ -49,6 +50,7 @@ public class HexGridGenerator : MonoBehaviour
     [SerializeField] private bool enablePathFinder = true;
 
     [Header("Grid Settings")]
+    [SerializeField] private bool isFlatTopped = false;
     [Tooltip("The length of the hexagon edge")]
     [SerializeField] private float tileEdgeSize = 1;
     [Tooltip("The height to place the props on the hexagon tile")]
@@ -354,7 +356,13 @@ public class HexGridGenerator : MonoBehaviour
         if (tile.tilePrefab == null) return;
 
         // Instantiate the structures Base Prefab
-        GameObject tileObj = Instantiate(baseHexTilePrefab, position, Quaternion.identity, gridContainer);
+        Quaternion rotation = Quaternion.identity;
+        if (isFlatTopped)
+        {
+            rotation = Quaternion.Euler(0.0f, FlatTopAngleCorrection, 0.0f);
+        }
+
+        GameObject tileObj = Instantiate(baseHexTilePrefab, position, rotation, gridContainer);
         HexTileData tileData = tileObj.GetComponent<HexTileData>();
 
         CubeTileMapping mapping = new()

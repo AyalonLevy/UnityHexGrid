@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -10,10 +9,17 @@ public class MovementSystem : MonoBehaviour
     [SerializeField] private HexGridSelector hexGridSelector;
     [SerializeField] private GridManager gridManager;
 
+    private enum MovementState
+    {
+        Idle,
+        WaitingForDestination,
+        Moving
+    }
+
+    private MovementState currentState = MovementState.Idle;
     private BFSResult movementRange = new();
     private List<Vector3Int> currentPath = new();
     private Unit selectedUnit;
-    private Unit movingUnit;
 
     public bool HasActiveUnit => selectedUnit != null;
 
@@ -44,9 +50,9 @@ public class MovementSystem : MonoBehaviour
             hexGridSelector.OnTileClicked -= ProcessMovementClick;
         }
 
-        if (movingUnit != null)
+        if (selectedUnit != null)
         {
-            movingUnit.MovementFinished -= HandleMovementFinished;
+            selectedUnit.MovementFinished -= HandleMovementFinished;
         }
     }
 
@@ -62,11 +68,14 @@ public class MovementSystem : MonoBehaviour
         // If a different unit was already active, clear its range first
         if (selectedUnit != null && selectedUnit != unit)
         {
-            HideRange();
+            CleanupUnit(selectedUnit);
         }
 
         selectedUnit = unit;
-        ShowRange(selectedUnit);
+        selectedUnit.MovementFinished += HandleMovementFinished;
+
+        CalculateAndShowRange(selectedUnit);
+        currentState = MovementState.WaitingForDestination;
 
         if (hexGridSelector != null && hexGridSelector.CurrentSelectedTile != null)
         {
@@ -79,39 +88,133 @@ public class MovementSystem : MonoBehaviour
 
     private void HandleUnitDeselected(Unit unit)
     {
-        // If the unit is currently moving, do not hide the path highlights prematurely.
-        // HandleMovementFinished will clean them up when the unit reaches its destination.
-        if (movingUnit != null) return;
+        // Prevent deselection interruption while the unit is actively walking
+        if (currentState == MovementState.Moving) return;
 
-        HideRange();
+        CleanupUnit(unit);
         selectedUnit = null;
+        currentState = MovementState.Idle;
+    }
+
+    private void CleanupUnit(Unit unit)
+    {
+        if (unit != null)
+        {
+            unit.MovementFinished -= HandleMovementFinished;
+        }
+        HideRange();
     }
 
     public void ProcessMovementClick(HexTileData clickedTile)
     {
-        if (selectedUnit == null) return;
+        if (currentState != MovementState.WaitingForDestination || selectedUnit == null) return;
 
         // Check if the clicked tile is within the valid movement range
         if (IsHexInRange(clickedTile.tileCoordinates))
         {
             // 1. Generate and display the path to the clicked tile
-            //currentPath = movementRange.GetPathTo(clickedTile.tileCoordinates);
+            currentPath = movementRange.GetPathTo(clickedTile.tileCoordinates);
 
             // Highlight the path visuals
             ShowPath(clickedTile.tileCoordinates);
 
-            movingUnit = selectedUnit;
-            movingUnit.MovementFinished += HandleMovementFinished;
-
             // 2. Execute movement along that path
+            currentState = MovementState.Moving;
             MoveUnit();
-
-            // 3. Cleanup selection state after moving
+        }
+        else
+        {
+            // Clicked a tile that is NOT part of the valid path/range -> Deselect the unit
             if (unitSelector != null)
             {
                 unitSelector.ClearSelection();
             }
-            selectedUnit = null;
+        }
+    }
+
+    public void MoveUnit()
+    {
+        if (selectedUnit == null || currentPath == null || currentPath.Count == 0) return;
+
+        // Build world position list safely
+        List<Vector3> worldPositions = new();
+        foreach (Vector3Int pos in currentPath)
+        {
+            HexTileData tile = gridManager.GetTileAt(pos);
+            if (tile != null)
+            {
+                worldPositions.Add(tile.transform.position);
+            }
+        }
+
+        selectedUnit.MoveThroughPath(worldPositions);
+    }
+
+    private void HandleMovementFinished(Unit unit)
+    {
+        // Update the unit's logical current tile to the final destination
+        if (currentPath.Count > 0)
+        {
+            Vector3Int destinationCoord = currentPath.Last();
+            unit.CurrentTile = gridManager.GetTileAt(destinationCoord);
+        }
+
+        ClearPathHighlights();
+        currentPath.Clear();
+
+        CalculateAndShowRange(selectedUnit);
+        currentState = MovementState.WaitingForDestination;
+    }
+
+    private void CalculateAndShowRange(Unit unit)
+    {
+        EnsureUnitTile(unit);
+        movementRange = GraphSearch.BFSGetRange(gridManager, unit.CurrentTile.tileCoordinates, unit.MovementPoints);
+
+        Vector3Int unitCoord = unit.CurrentTile.tileCoordinates;
+        foreach (Vector3Int hexPosition in movementRange.GetRangePositions())
+        {
+            if (unitCoord == hexPosition) continue;
+
+            HexTileData tile = gridManager.GetTileAt(hexPosition);
+            if (tile != null && !tile.IsObstacle())
+            {
+                tile.EnableHighlight(true);
+            }
+        }
+    }
+
+    private void EnsureUnitTile(Unit unit)
+    {
+        if (unit.CurrentTile == null)
+        {
+            Vector3Int startCoord = gridManager.GetClosestHex(unit.transform.position);
+            unit.CurrentTile = gridManager.GetTileAt(startCoord);
+        }
+    }
+
+    public void ShowPath(Vector3Int selectedHexPosition)
+    {
+        HashSet<Vector3Int> pathSet = new(currentPath);
+
+        if (IsHexInRange(selectedHexPosition))
+        {
+            foreach (Vector3Int hexPosition in movementRange.GetRangePositions())
+            {
+                HexTileData tile = gridManager.GetTileAt(hexPosition);
+                if (tile == null) continue;
+
+                if (pathSet.Contains(hexPosition))
+                {
+                    // If tile is in the path, apply highlight
+                    tile.EnableHighlight(true);
+                }
+                else
+                {
+                    // If tile is in range but NOT in the path, remove highlight completely
+                    tile.DisableHighlight(false);
+                }
+            }
         }
     }
 
@@ -132,11 +235,8 @@ public class MovementSystem : MonoBehaviour
         currentPath.Clear(); // Clears lingering path references
     }
 
-    private void HandleMovementFinished(Unit unit)
+    private void ClearPathHighlights()
     {
-        unit.MovementFinished -= HandleMovementFinished;
-
-        // Reset and turn off path highlights once the unit reaches its target
         foreach (Vector3Int hexPosition in currentPath)
         {
             HexTileData tile = gridManager.GetTileAt(hexPosition);
@@ -145,96 +245,6 @@ public class MovementSystem : MonoBehaviour
                 tile.DisableHighlight(true);
             }
         }
-
-        movementRange = new();
-        currentPath.Clear();
-        if (movingUnit == unit) movingUnit = null;
-    }
-
-    public void ShowRange(Unit unit)
-    {
-        CalculateRange(unit);
-
-        // Utilize cached unit tile coordinate directly without secondary world-position lookups
-        Vector3Int unitCoord = unit.CurrentTile.tileCoordinates;
-
-        foreach (Vector3Int hexPosition in movementRange.GetRangePositions())
-        {
-            if (unitCoord == hexPosition) continue;
-
-            HexTileData tile = gridManager.GetTileAt(hexPosition);
-            if (tile != null && !tile.IsObstacle())
-            {
-                tile.EnableHighlight(true);
-            }
-        }
-    }
-
-    private void CalculateRange(Unit unit)
-    {
-        Vector3Int startCoord;
-
-        if (unit.CurrentTile != null)
-        {
-            startCoord = unit.CurrentTile.tileCoordinates;
-        }
-        else
-        {
-            // Fallback for initial placement/spawn
-            startCoord = gridManager.GetClosestHex(unit.transform.position);
-            unit.CurrentTile = gridManager.GetTileAt(startCoord);
-        }
-
-        movementRange = GraphSearch.BFSGetRange(gridManager, startCoord, unit.MovementPoints);
-    }
-
-    public void ShowPath(Vector3Int selectedHexPosition)
-    {
-        if (IsHexInRange(selectedHexPosition))
-        {
-            currentPath = movementRange.GetPathTo(selectedHexPosition);
-            HashSet<Vector3Int> pathSet = new(currentPath);
-
-            // Iterate through all tiles in the movement range
-            foreach (Vector3Int hexPosition in movementRange.GetRangePositions())
-            {
-                HexTileData tile = gridManager.GetTileAt(hexPosition);
-                if (tile == null) continue;
-
-                if (pathSet.Contains(hexPosition))
-                {
-                    // If tile is in the path, apply highlight
-                    tile.EnableHighlight(true);
-                }
-                else
-                {
-                    // If tile is in range but NOT in the path, remove highlight completely
-                    tile.DisableHighlight(false);
-                }
-            }
-        }
-    }
-
-    public void MoveUnit()
-    {
-        if (selectedUnit == null || currentPath == null || currentPath.Count == 0) return;
-
-        // Update the unit's current tile to the final destination of the path
-        Vector3Int destinationCoord = currentPath.Last();
-        selectedUnit.CurrentTile = gridManager.GetTileAt(destinationCoord);
-
-        // Build world position list safely
-        List<Vector3> worldPositions = new();
-        foreach (Vector3Int pos in currentPath)
-        {
-            HexTileData tile = gridManager.GetTileAt(pos);
-            if (tile != null)
-            {
-                worldPositions.Add(tile.transform.position);
-            }
-        }
-
-        selectedUnit.MoveThroughPath(worldPositions);
     }
 
     public bool IsHexInRange(Vector3Int hexPosition)

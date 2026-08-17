@@ -14,29 +14,36 @@ public class Unit : MonoBehaviour
     [SerializeField] private float movementDuration = 1.0f;
     [SerializeField] private float rotationDuration = 0.3f;
 
-    [Header("Unit Highlight Settings")]
-    [Tooltip("The unlit transparent material used for the highlight glow.")]
-    [SerializeField] private Material highlightMaterial;
+    [Header("Selection Indicator Settings")]
+    [Tooltip("Reference to the 2D ground indicator GameObject.")]
+    [SerializeField] private GameObject selectionIndicator;
 
     public HexTileData CurrentTile { get; set; }
 
-    private Highlight highlight;
     private Queue<Vector3> pathPositions = new();
 
     public event Action<Unit> MovementFinished;
 
     private void Awake()
     {
-        highlight = GetComponent<Highlight>();
-        if (highlight != null)
+        Deselect();
+    }
+
+    internal void Deselect()
+    {
+        if (selectionIndicator != null)
         {
-            highlight.InitializeHighlight(transform);
+            selectionIndicator.SetActive(false);
         }
     }
 
-    internal void Deselect() => highlight.SetHighlight(false, highlightMaterial);
-
-    public void Select() => highlight.SetHighlight(true, highlightMaterial);
+    public void Select()
+    {
+        if (selectionIndicator != null)
+        {
+            selectionIndicator.SetActive(true);
+        }
+    }
 
     internal void MoveThroughPath(List<Vector3> currentPath)
     {
@@ -61,7 +68,7 @@ public class Unit : MonoBehaviour
         if (direction != Vector3.zero)
         {
             Quaternion endRotation = Quaternion.LookRotation(direction, Vector3.up);
-            
+
             if (!Mathf.Approximately(Mathf.Abs(Quaternion.Dot(startRotation, endRotation)), 1.0f))
             {
                 float elapsedTime = 0;
@@ -75,7 +82,6 @@ public class Unit : MonoBehaviour
 
                 transform.rotation = endRotation;
             }
-
         }
 
         StartCoroutine(MovementCoroutine(endPosition));

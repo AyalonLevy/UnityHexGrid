@@ -33,8 +33,7 @@ public class UnitSelector : Selector
 
     protected override void HandleRaycastMiss()
     {
-        // Intentionally left blank: Clicking empty space should not automatically deselect the unit.
-        // TODO: Decide what to do in this case
+        ClearSelection();
     }
 
     private void SelectUnit(Unit newUnit)

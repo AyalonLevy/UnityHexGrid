@@ -34,7 +34,7 @@ public class HexGridSelector : Selector
         if (hitTile != null)
         {
             // 1. Check if pathfinding is active and this clicked tile is a highlighted movement target
-            if (movementSystem != null && movementSystem.HasActiveUnit && movementSystem.IsHexInRange(hitTile.tileCoordinates))
+            if (movementSystem != null && movementSystem.HasActiveUnit)
             {
                 // It is highlighted as a valid move destination! Send action and return.
                 movementSystem.ProcessMovementClick(hitTile);
@@ -57,15 +57,6 @@ public class HexGridSelector : Selector
         }
         else
         {
-            // Check if the tile is part of a possible path when clicking a unit
-            if (TryGetComponent<MovementSystem>(out var movementSystem) && movementSystem.HasActiveUnit)
-            {
-                if (currentlySelectedTile != null && movementSystem.IsHexInRange(currentlySelectedTile.tileCoordinates))
-                {
-                    return;
-                }
-            }
-
             ClearSelection();
         }
     }
