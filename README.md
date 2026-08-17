@@ -5,21 +5,21 @@
     <tr>
       <!-- GIF 1 + Caption -->
       <td align="center" style="padding: 0; border: none;">
-        <img src="Assets/HexGrid/Documentation~/Media/GridGenerator.gif" alt="Procedural Generation" width="380" /><br>
+        <img src="Assets/HexGrid/Documentation~/Media/GridGenerator.gif" alt="Procedural Generation" width="280" /><br>
         <b>Procedural Generation</b>
       </td>
       <!-- Gap 1 (Adjust width to control spacing) -->
       <td width="25" style="border: none;"></td>
       <!-- GIF 2 + Caption -->
       <td align="center" style="padding: 0; border: none;">
-        <img src="Assets/HexGrid/Documentation~/Media/GridFromFile.gif" alt="Load From File" width="380" /><br>
+        <img src="Assets/HexGrid/Documentation~/Media/GridFromFile.gif" alt="Load From File" width="280" /><br>
         <b>Load From JSON</b>
       </td>
       <!-- Gap 2 (Adjust width to control spacing) -->
       <td width="25" style="border: none;"></td>
       <!-- GIF 3 + Caption -->
       <td align="center" style="padding: 0; border: none;">
-        <img src="Assets/HexGrid/Documentation~/Media/FoW.gif" alt="Fog of War & Pathfinding" width="380" /><br>
+        <img src="Assets/HexGrid/Documentation~/Media/FoW.gif" alt="Fog of War & Pathfinding" width="280" /><br>
         <b>Fog of War & Pathfinding</b>
       </td>
     </tr>
