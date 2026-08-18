@@ -1,26 +1,29 @@
-using System.Collections.Generic;
-using UnityEngine;
-
-[System.Serializable]
-public struct CubeTileMapping
+namespace HexGrid
 {
-    public Vector3Int cubeCoordinates;
-    public HexTileData tile;
-}
+    using System.Collections.Generic;
 
-public class GridManager : MonoBehaviour
-{
-    [Header("Data")]
-    [Tooltip("Pre-populated by the HexGridGenerator for scene persistence.")]
-    [SerializeField] private List<CubeTileMapping> serializedTiles = new();
+    using UnityEngine;
 
-    [Header("Grid Metrics")]
-    [Tooltip("Hexagon radius, stored automatically by the Generator for coordinate calculations.")]
-    [SerializeField] private float hexRadius = 1.0f;
+    [System.Serializable]
+    public struct CubeTileMapping
+    {
+        public Vector3Int cubeCoordinates;
+        public HexTileData tile;
+    }
 
-    private readonly Dictionary<Vector3Int, HexTileData> grid = new();
+    public class GridManager : MonoBehaviour
+    {
+        [Header("Data")]
+        [Tooltip("Pre-populated by the HexGridGenerator for scene persistence.")]
+        [SerializeField] private List<CubeTileMapping> serializedTiles = new();
 
-    public static readonly List<Vector3Int> cubeDirections = new()
+        [Header("Grid Metrics")]
+        [Tooltip("Hexagon radius, stored automatically by the Generator for coordinate calculations.")]
+        [SerializeField] private float hexRadius = 1.0f;
+
+        private readonly Dictionary<Vector3Int, HexTileData> grid = new();
+
+        public static readonly List<Vector3Int> cubeDirections = new()
     {
         new Vector3Int(1, 0, -1),   // E
         new Vector3Int(0, 1, -1),   // NE
@@ -30,86 +33,87 @@ public class GridManager : MonoBehaviour
         new Vector3Int(1, -1, 0)    // SW
     };
 
-    public float HexRadius => hexRadius;
+        public float HexRadius => hexRadius;
 
-    private void Awake()
-    {
-        InitializeDictionary();
-    }
-
-    private void InitializeDictionary()
-    {
-        grid.Clear();
-
-        foreach (CubeTileMapping mapping in serializedTiles)
+        private void Awake()
         {
-            if (mapping.tile != null && !grid.ContainsKey(mapping.cubeCoordinates))
-            {
-                grid.Add(mapping.cubeCoordinates, mapping.tile);
-            }
-        }
-    }
-
-    public void InjectGridData(List<CubeTileMapping> generatedTiles, float radius)
-    {
-        serializedTiles = new(generatedTiles);
-        hexRadius = radius;
-
-        // Ensure runtime dictionary updates immediately with injected data
-        InitializeDictionary();
-
-#if UNITY_EDITOR
-        // Tell Unity this object's data changed so it saves the list to the scene file
-        UnityEditor.EditorUtility.SetDirty(this);
-#endif
-    }
-
-    public HexTileData GetTileAt(Vector3Int coordinates)
-    {
-        return grid.TryGetValue(coordinates, out HexTileData tile) ? tile : null;
-    }
-
-    public List<HexTileData> GetTileNeighbours(Vector3Int centerCoordinates)
-    {
-        List<HexTileData> neighbours = new();
-
-        foreach (Vector3Int direction in cubeDirections)
-        {
-            Vector3Int neighbourCoord = centerCoordinates + direction;
-            HexTileData neighbourTile = GetTileAt(neighbourCoord);
-
-            if (neighbourTile != null)
-            {
-                neighbours.Add(neighbourTile);
-            }
+            InitializeDictionary();
         }
 
-        return neighbours;
-    }
-
-    /// <summary>
-    /// Returns all tiles within a specific radius from a center cube coordinate.
-    /// </summary>
-    public List<HexTileData> GetTilesInRadius(Vector3Int center, int radius)
-    {
-        List<HexTileData> tilesInRadius = new();
-
-        foreach (var tile in grid)
+        private void InitializeDictionary()
         {
-            if (HexGridMath.GetCubeDistance(center, tile.Key) <= radius)
+            grid.Clear();
+
+            foreach (CubeTileMapping mapping in serializedTiles)
             {
-                if (tile.Value != null)
+                if (mapping.tile != null && !grid.ContainsKey(mapping.cubeCoordinates))
                 {
-                    tilesInRadius.Add(tile.Value);
+                    grid.Add(mapping.cubeCoordinates, mapping.tile);
                 }
             }
         }
 
-        return tilesInRadius;
-    }
+        public void InjectGridData(List<CubeTileMapping> generatedTiles, float radius)
+        {
+            serializedTiles = new(generatedTiles);
+            hexRadius = radius;
 
-    public Vector3Int GetClosestHex(Vector3 worldPosition)
-    {
-        return HexGridMath.WorldToCubeCoordinates(worldPosition, hexRadius);
+            // Ensure runtime dictionary updates immediately with injected data
+            InitializeDictionary();
+
+#if UNITY_EDITOR
+            // Tell Unity this object's data changed so it saves the list to the scene file
+            UnityEditor.EditorUtility.SetDirty(this);
+#endif
+        }
+
+        public HexTileData GetTileAt(Vector3Int coordinates)
+        {
+            return grid.TryGetValue(coordinates, out HexTileData tile) ? tile : null;
+        }
+
+        public List<HexTileData> GetTileNeighbours(Vector3Int centerCoordinates)
+        {
+            List<HexTileData> neighbours = new();
+
+            foreach (Vector3Int direction in cubeDirections)
+            {
+                Vector3Int neighbourCoord = centerCoordinates + direction;
+                HexTileData neighbourTile = GetTileAt(neighbourCoord);
+
+                if (neighbourTile != null)
+                {
+                    neighbours.Add(neighbourTile);
+                }
+            }
+
+            return neighbours;
+        }
+
+        /// <summary>
+        /// Returns all tiles within a specific radius from a center cube coordinate.
+        /// </summary>
+        public List<HexTileData> GetTilesInRadius(Vector3Int center, int radius)
+        {
+            List<HexTileData> tilesInRadius = new();
+
+            foreach (var tile in grid)
+            {
+                if (HexGridMath.GetCubeDistance(center, tile.Key) <= radius)
+                {
+                    if (tile.Value != null)
+                    {
+                        tilesInRadius.Add(tile.Value);
+                    }
+                }
+            }
+
+            return tilesInRadius;
+        }
+
+        public Vector3Int GetClosestHex(Vector3 worldPosition)
+        {
+            return HexGridMath.WorldToCubeCoordinates(worldPosition, hexRadius);
+        }
     }
 }

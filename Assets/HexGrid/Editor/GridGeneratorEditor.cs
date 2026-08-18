@@ -1,111 +1,114 @@
-using UnityEditor;
-using UnityEngine;
-
-[CustomEditor(typeof(HexGridGenerator))]
-public class GridGeneratorEditor : Editor
+namespace HexGrid.Editor
 {
-    // SerializedProperties link to the underlying field safety
-    private SerializedProperty gridShapeProp;
-    private SerializedProperty gridSizeProp;
-    private SerializedProperty gridRadiusProp;
-    private SerializedProperty gridDataFileProp;
-    private SerializedProperty addPropsProp;
-    private SerializedProperty coveragePercentageProp;
-    private SerializedProperty scaleRangeProp;
-    private SerializedProperty fileNameProps;
+    using UnityEditor;
+    using UnityEngine;
 
-    private void OnEnable()
+    [CustomEditor(typeof(HexGridGenerator))]
+    public class GridGeneratorEditor : Editor
     {
-        // Cache the properties for performance and safety
-        gridShapeProp = serializedObject.FindProperty("gridShape");
-        gridSizeProp = serializedObject.FindProperty("gridSize");
-        gridRadiusProp = serializedObject.FindProperty("gridRadius");
-        gridDataFileProp = serializedObject.FindProperty("gridDataFile");
-        addPropsProp = serializedObject.FindProperty("addProps");
-        coveragePercentageProp = serializedObject.FindProperty("coveragePercentage");
-        scaleRangeProp = serializedObject.FindProperty("scaleRange");
-        fileNameProps = serializedObject.FindProperty("fileName");
-    }
+        // SerializedProperties link to the underlying field safety
+        private SerializedProperty gridShapeProp;
+        private SerializedProperty gridSizeProp;
+        private SerializedProperty gridRadiusProp;
+        private SerializedProperty gridDataFileProp;
+        private SerializedProperty addPropsProp;
+        private SerializedProperty coveragePercentageProp;
+        private SerializedProperty scaleRangeProp;
+        private SerializedProperty fileNameProps;
 
-    public override void OnInspectorGUI()
-    {
-        // Always update the serialized object at the start of GUI rendering
-        serializedObject.Update();
-
-        // Draw everything in the script automatically, EXCLUDING the specified properties
-        DrawPropertiesExcluding(serializedObject, "gridShape", "gridSize", "gridRadius", "gridDataFile", "addProps", "coveragePercentage", "scaleRange", "fileName");
-
-        // Draw the grid shape enum dropdown first
-        EditorGUILayout.PropertyField(gridShapeProp);
-
-        EditorGUILayout.Space();
-
-        // Check the current enum value
-        GridShape selectedShape = (GridShape)gridShapeProp.enumValueIndex;
-
-        if (selectedShape == GridShape.Rectangle)
+        private void OnEnable()
         {
-            EditorGUILayout.LabelField("Rectangle Grid Parameters", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(gridSizeProp);
-        }
-        else if (selectedShape == GridShape.Hexagonal)
-        {
-            EditorGUILayout.LabelField("Hexagonal Grid Parameters", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(gridRadiusProp);
-        }
-        else if (selectedShape == GridShape.FromFile)
-        {
-            EditorGUILayout.LabelField("Grid From File Parameters", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(gridDataFileProp);
+            // Cache the properties for performance and safety
+            gridShapeProp = serializedObject.FindProperty("gridShape");
+            gridSizeProp = serializedObject.FindProperty("gridSize");
+            gridRadiusProp = serializedObject.FindProperty("gridRadius");
+            gridDataFileProp = serializedObject.FindProperty("gridDataFile");
+            addPropsProp = serializedObject.FindProperty("addProps");
+            coveragePercentageProp = serializedObject.FindProperty("coveragePercentage");
+            scaleRangeProp = serializedObject.FindProperty("scaleRange");
+            fileNameProps = serializedObject.FindProperty("fileName");
         }
 
-        EditorGUILayout.Space();
-
-        EditorGUILayout.LabelField("Props Parameters", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(addPropsProp);
-
-        if (addPropsProp.boolValue)
+        public override void OnInspectorGUI()
         {
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("coveragePercentage"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("scaleRange"));
-        }
+            // Always update the serialized object at the start of GUI rendering
+            serializedObject.Update();
 
-        // Apply any changes made in the inspector to the target object
-        serializedObject.ApplyModifiedProperties();
+            // Draw everything in the script automatically, EXCLUDING the specified properties
+            DrawPropertiesExcluding(serializedObject, "gridShape", "gridSize", "gridRadius", "gridDataFile", "addProps", "coveragePercentage", "scaleRange", "fileName");
 
-        EditorGUILayout.Space(15);
+            // Draw the grid shape enum dropdown first
+            EditorGUILayout.PropertyField(gridShapeProp);
 
-        // Reference to target script component
-        HexGridGenerator generator = (HexGridGenerator)target;
+            EditorGUILayout.Space();
 
-        // Draw Generate, Clear Save and buttons in the Inspector
-        Color originalColor = GUI.backgroundColor;
-        GUI.backgroundColor = new Color(0.2f, 1.0f, 0.3f);
-        if (GUILayout.Button("Generate Grid", GUILayout.Height(35)))
-        {
-            generator.GenerateGrid();
-        }
+            // Check the current enum value
+            GridShape selectedShape = (GridShape)gridShapeProp.enumValueIndex;
 
-        GUI.backgroundColor = new Color(1.0f, 0.2f, 0.3f);
-        if (GUILayout.Button("Clear Grid", GUILayout.Height(30)))
-        {
-            generator.ClearGrid();
-        }
+            if (selectedShape == GridShape.Rectangle)
+            {
+                EditorGUILayout.LabelField("Rectangle Grid Parameters", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(gridSizeProp);
+            }
+            else if (selectedShape == GridShape.Hexagonal)
+            {
+                EditorGUILayout.LabelField("Hexagonal Grid Parameters", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(gridRadiusProp);
+            }
+            else if (selectedShape == GridShape.FromFile)
+            {
+                EditorGUILayout.LabelField("Grid From File Parameters", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(gridDataFileProp);
+            }
 
-        EditorGUILayout.Space(3);
+            EditorGUILayout.Space();
 
-        GUI.backgroundColor = originalColor;
-        EditorGUILayout.LabelField("Save Settings", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(fileNameProps);
+            EditorGUILayout.LabelField("Props Parameters", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(addPropsProp);
 
-        EditorGUILayout.Space(15);
+            if (addPropsProp.boolValue)
+            {
+                EditorGUILayout.PropertyField(coveragePercentageProp);
+                EditorGUILayout.PropertyField(scaleRangeProp);
+            }
 
-        // Apply any changes made in the inspector to the target object
-        serializedObject.ApplyModifiedProperties();
+            // Apply any changes made in the inspector to the target object
+            serializedObject.ApplyModifiedProperties();
 
-        if (GUILayout.Button("Save Grid to File", GUILayout.Height(35)))
-        {
-            generator.SaveGridToFile();
+            EditorGUILayout.Space(15);
+
+            // Reference to target script component
+            HexGridGenerator generator = (HexGridGenerator)target;
+
+            // Draw Generate, Clear Save and buttons in the Inspector
+            Color originalColor = GUI.backgroundColor;
+            GUI.backgroundColor = new Color(0.2f, 1.0f, 0.3f);
+            if (GUILayout.Button("Generate Grid", GUILayout.Height(35)))
+            {
+                generator.GenerateGrid();
+            }
+
+            GUI.backgroundColor = new Color(1.0f, 0.2f, 0.3f);
+            if (GUILayout.Button("Clear Grid", GUILayout.Height(30)))
+            {
+                generator.ClearGrid();
+            }
+
+            EditorGUILayout.Space(3);
+
+            GUI.backgroundColor = originalColor;
+            EditorGUILayout.LabelField("Save Settings", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(fileNameProps);
+
+            EditorGUILayout.Space(15);
+
+            // Apply any changes made in the inspector to the target object
+            serializedObject.ApplyModifiedProperties();
+
+            if (GUILayout.Button("Save Grid to File", GUILayout.Height(35)))
+            {
+                generator.SaveGridToFile();
+            }
         }
     }
 }

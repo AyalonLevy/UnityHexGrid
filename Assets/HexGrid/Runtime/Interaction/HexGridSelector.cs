@@ -1,95 +1,98 @@
-using System;
-using UnityEngine;
-
-[RequireComponent(typeof(GridManager))]
-public class HexGridSelector : Selector
+namespace HexGrid
 {
-    private HexTileData currentlySelectedTile;
-    private MovementSystem movementSystem;
+    using System;
+    using UnityEngine;
 
-    // Public API Events for external tool integration
-    public event Action<HexTileData> OnTileSelected;
-    public event Action<HexTileData> OnTileDeselected;
-    public event Action<HexTileData> OnTileClicked;
-
-    [HideInInspector] public bool isSelectable = false;
-
-    public HexTileData CurrentSelectedTile => currentlySelectedTile;
-    public void SetSelectableState(bool canBeSelected) { isSelectable = canBeSelected; }
-
-    protected override void Awake()
+    [RequireComponent(typeof(GridManager))]
+    public class HexGridSelector : Selector
     {
-        base.Awake();
-        movementSystem = GetComponent<MovementSystem>();
-    }
+        private HexTileData currentlySelectedTile;
+        private MovementSystem movementSystem;
 
-    protected override void HandleRaycastHit(RaycastHit hit)
-    {
-        if (hit.collider == null) return;
+        // Public API Events for external tool integration
+        public event Action<HexTileData> OnTileSelected;
+        public event Action<HexTileData> OnTileDeselected;
+        public event Action<HexTileData> OnTileClicked;
 
-        HexTileData hitTile = hit.collider.GetComponentInParent<HexTileData>();
+        [HideInInspector] public bool isSelectable = false;
 
-        if (movementSystem == null) movementSystem = GetComponent<MovementSystem>();
+        public HexTileData CurrentSelectedTile => currentlySelectedTile;
+        public void SetSelectableState(bool canBeSelected) { isSelectable = canBeSelected; }
 
-        if (hitTile != null)
+        protected override void Awake()
         {
-            // 1. Check if pathfinding is active and this clicked tile is a highlighted movement target
-            if (movementSystem != null && movementSystem.HasActiveUnit)
-            {
-                // It is highlighted as a valid move destination! Send action and return.
-                movementSystem.ProcessMovementClick(hitTile);
-                OnTileClicked?.Invoke(hitTile);
-                return;
-            }
+            base.Awake();
+            movementSystem = GetComponent<MovementSystem>();
+        }
 
-            // 2. Otherwise, it is NOT highlighted for movement. Continue with normal tile selection/building logic.
-            if (isSelectable)
+        protected override void HandleRaycastHit(RaycastHit hit)
+        {
+            if (hit.collider == null) return;
+
+            HexTileData hitTile = hit.collider.GetComponentInParent<HexTileData>();
+
+            if (movementSystem == null) movementSystem = GetComponent<MovementSystem>();
+
+            if (hitTile != null)
             {
-                if (hitTile != currentlySelectedTile)
+                // 1. Check if pathfinding is active and this clicked tile is a highlighted movement target
+                if (movementSystem != null && movementSystem.HasActiveUnit)
                 {
-                    SelectTile(hitTile);
+                    // It is highlighted as a valid move destination! Send action and return.
+                    movementSystem.ProcessMovementClick(hitTile);
+                    OnTileClicked?.Invoke(hitTile);
+                    return;
                 }
-                else
+
+                // 2. Otherwise, it is NOT highlighted for movement. Continue with normal tile selection/building logic.
+                if (isSelectable)
                 {
-                    ClearSelection();
+                    if (hitTile != currentlySelectedTile)
+                    {
+                        SelectTile(hitTile);
+                    }
+                    else
+                    {
+                        ClearSelection();
+                    }
                 }
+            }
+            else
+            {
+                ClearSelection();
             }
         }
-        else
+
+        protected override void HandleRaycastMiss()
         {
             ClearSelection();
         }
-    }
 
-    protected override void HandleRaycastMiss()
-    {
-        ClearSelection();
-    }
-
-    private void SelectTile(HexTileData newTile)
-    {
-        if (currentlySelectedTile != null)
+        private void SelectTile(HexTileData newTile)
         {
-            currentlySelectedTile.DisableHighlight(false);
-            OnTileDeselected?.Invoke(currentlySelectedTile);
+            if (currentlySelectedTile != null)
+            {
+                currentlySelectedTile.DisableHighlight(false);
+                OnTileDeselected?.Invoke(currentlySelectedTile);
+            }
+
+            currentlySelectedTile = newTile;
+
+            if (currentlySelectedTile != null)
+            {
+                currentlySelectedTile.EnableHighlight(false);
+                OnTileSelected?.Invoke(currentlySelectedTile);
+            }
         }
 
-        currentlySelectedTile = newTile;
-
-        if (currentlySelectedTile != null)
+        public void ClearSelection()
         {
-            currentlySelectedTile.EnableHighlight(false);
-            OnTileSelected?.Invoke(currentlySelectedTile);
-        }
-    }
-
-    public void ClearSelection()
-    {
-        if (currentlySelectedTile != null)
-        {
-            currentlySelectedTile.DisableHighlight(false);
-            OnTileDeselected?.Invoke(currentlySelectedTile);
-            currentlySelectedTile = null;
+            if (currentlySelectedTile != null)
+            {
+                currentlySelectedTile.DisableHighlight(false);
+                OnTileDeselected?.Invoke(currentlySelectedTile);
+                currentlySelectedTile = null;
+            }
         }
     }
 }

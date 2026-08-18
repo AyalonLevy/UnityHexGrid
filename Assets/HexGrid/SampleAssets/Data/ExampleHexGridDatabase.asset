@@ -77,7 +77,7 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 20e3a69104887fa4fa836244d98c4dd9, type: 2}
     spawnChance: 0.3
     terrainEffect: 5
-  - propPrefab: {fileID: 7758743455125150416, guid: ffbb75ce14717aa4681621807c939eba, type: 3}
+  - propPrefab: {fileID: 1896517386464349534, guid: 5efa192f218b22243995490482a1a929, type: 3}
     domains:
     - {fileID: 11400000, guid: 20e3a69104887fa4fa836244d98c4dd9, type: 2}
     spawnChance: 0.4

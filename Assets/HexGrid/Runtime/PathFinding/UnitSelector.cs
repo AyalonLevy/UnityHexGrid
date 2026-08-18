@@ -1,65 +1,68 @@
-using System;
-using UnityEngine;
-
-public class UnitSelector : Selector
+namespace HexGrid
 {
-    private Unit currentlySelectedUnit;
+    using System;
+    using UnityEngine;
 
-    // Public API Events
-    public event Action<Unit> OnUnitSelected;
-    public event Action<Unit> OnUnitDeselected;
-
-    public Unit CurrentlySelectedUnit => currentlySelectedUnit;
-
-    protected override void HandleRaycastHit(RaycastHit hit)
+    public class UnitSelector : Selector
     {
-        if (hit.collider == null) return;
+        private Unit currentlySelectedUnit;
 
-        Unit hitUnit = hit.collider.GetComponentInParent<Unit>();
+        // Public API Events
+        public event Action<Unit> OnUnitSelected;
+        public event Action<Unit> OnUnitDeselected;
 
-        if (hitUnit != null)
+        public Unit CurrentlySelectedUnit => currentlySelectedUnit;
+
+        protected override void HandleRaycastHit(RaycastHit hit)
         {
-            if (hitUnit != currentlySelectedUnit)
+            if (hit.collider == null) return;
+
+            Unit hitUnit = hit.collider.GetComponentInParent<Unit>();
+
+            if (hitUnit != null)
             {
-                SelectUnit(hitUnit);
+                if (hitUnit != currentlySelectedUnit)
+                {
+                    SelectUnit(hitUnit);
+                }
+                else
+                {
+                    ClearSelection();
+                }
             }
-            else
+        }
+
+
+        protected override void HandleRaycastMiss()
+        {
+            ClearSelection();
+        }
+
+        private void SelectUnit(Unit newUnit)
+        {
+            if (currentlySelectedUnit != null)
             {
-                ClearSelection();
+                currentlySelectedUnit.Deselect();
+                OnUnitDeselected?.Invoke(currentlySelectedUnit);
+            }
+
+            currentlySelectedUnit = newUnit;
+
+            if (currentlySelectedUnit != null)
+            {
+                currentlySelectedUnit.Select();
+                OnUnitSelected?.Invoke(currentlySelectedUnit);
             }
         }
-    }
 
-
-    protected override void HandleRaycastMiss()
-    {
-        ClearSelection();
-    }
-
-    private void SelectUnit(Unit newUnit)
-    {
-        if (currentlySelectedUnit != null)
+        public void ClearSelection()
         {
-            currentlySelectedUnit.Deselect();
-            OnUnitDeselected?.Invoke(currentlySelectedUnit);
-        }
-
-        currentlySelectedUnit = newUnit;
-
-        if (currentlySelectedUnit != null)
-        {
-            currentlySelectedUnit.Select();
-            OnUnitSelected?.Invoke(currentlySelectedUnit);
-        }
-    }
-
-    public void ClearSelection()
-    {
-        if (currentlySelectedUnit != null)
-        {
-            currentlySelectedUnit.Deselect();
-            OnUnitDeselected?.Invoke(currentlySelectedUnit);
-            currentlySelectedUnit = null;
+            if (currentlySelectedUnit != null)
+            {
+                currentlySelectedUnit.Deselect();
+                OnUnitDeselected?.Invoke(currentlySelectedUnit);
+                currentlySelectedUnit = null;
+            }
         }
     }
 }
