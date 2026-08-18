@@ -41,6 +41,7 @@ A robust, data-driven Hexagonal Grid generation framework built for **Unity 6.3*
 
 ## System Requirements
 * **Engine:** Unity 6.3 or higher
+* **Pipeline:** Universal Render Pipeline (URP)
 * **Dependencies:** None (Uses standard Unity UI and Physics for raycasting)
 
 ## Installation
