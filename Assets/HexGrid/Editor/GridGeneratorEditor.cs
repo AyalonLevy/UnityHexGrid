@@ -1,4 +1,4 @@
-namespace HexGrid.Editor
+namespace HexGrid
 {
     using UnityEditor;
     using UnityEngine;

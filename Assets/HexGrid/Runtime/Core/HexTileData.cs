@@ -68,8 +68,6 @@ namespace HexGrid
             UpdatePropContainerHeight();
 
 #if UNITY_EDITOR
-            SyncPropDropdown();
-
             // 1. Check if Domain changed (Clear props if required)
             if (database != null && currentDomain != previousDomain && previousDomain != null)
             {
