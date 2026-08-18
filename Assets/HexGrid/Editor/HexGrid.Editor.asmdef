@@ -1,0 +1,18 @@
+{
+    "name": "HexGrid.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:866c4544decfd7a4c9dd1353002d46b9"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

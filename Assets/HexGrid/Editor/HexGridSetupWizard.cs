@@ -269,14 +269,7 @@ public class HexGridSetupWizard : EditorWindow
             case WizardStep.Configuration:
                 ExecuteFullSetup();
                 currentStep = WizardStep.PopulateDatabase;
-                if (useExampleDatabase)
-                {
-                    PingAsset(activeDatabase);
-                }
-                else
-                {
-                    PingFolder(DomainsFolderPath, DataFolderPath);
-                }
+                PingAsset(activeDatabase);
                 break;
 
             case WizardStep.PopulateDatabase:
@@ -340,7 +333,6 @@ public class HexGridSetupWizard : EditorWindow
             CreateSceneGeneratorOnly();
         }
 
-        Debug.Log("Setup Skipped. Clean workspace folders and scene generator created.");
         Close();
     }
 
@@ -446,7 +438,6 @@ public class HexGridSetupWizard : EditorWindow
         }
 
         serializedGenerator.ApplyModifiedProperties();
-        Debug.Log("Hex Grid Generator configured and linked successfully!");
     }
 
     private void PingAsset(Object asset)
